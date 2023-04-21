@@ -33,7 +33,7 @@ struct TransactionView: View {
 private extension TransactionView {
 	func addTransaction() {
 		let sign = selectedCategory == .income ? 1 : -1
-		let transaction = Transaction(amount: Int(amount)! * 100 * sign, date: Date(), description: description, category: selectedCategory)
+        let transaction = Transaction(id: Int(), amount: Int(amount)! * 100 * sign, date: Date(), description: description, category: selectedCategory)
 		stateController.add(transaction)
 		dismiss()
 	}

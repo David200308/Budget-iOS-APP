@@ -10,10 +10,26 @@ import Foundation
 import GRDB
 
 final class StateController : ObservableObject {
-	@Published var account: Account = TestData.account
-    	
+	@Published var account: Account = TransactionData.account
+    
+    func count() -> Int {
+        var tempCount = 0
+        do {
+            let dbQueue = try DatabaseQueue(path: fileName())
+            
+            try dbQueue.read { db in
+                tempCount = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM data") ?? 0
+            }
+        } catch {
+            print(error)
+        }
+        return tempCount
+    }
+    
 	func add(_ transaction: Transaction) {
-		account.add(transaction)
+        var transaction = Transaction(id: count() + 1, amount: transaction.amount, date: transaction.date, description: transaction.description, category: transaction.category)
+        print("Test 2: ", transaction)
+        account.add(transaction)
     }
 }
 
@@ -30,17 +46,32 @@ func readData() -> [Transaction] {
     do {
         let dbQueue = try DatabaseQueue(path: fileName())
         
+        var isCreateTable = false
         
-        try dbQueue.write { db in
-            try db.create(table: "data") { t in
-                t.column("amount", .integer).notNull()
-                t.column("date", .date).notNull()
-                t.column("description", .text)
-                t.column("category", .text).notNull()
+        try dbQueue.read { db in
+            if (try db.tableExists("data") == false) {
+                print("Table Not Create")
+                isCreateTable = false
+            } else {
+                print("Already Created")
+                isCreateTable = true
+            }
+        }
+        
+        if (isCreateTable == false) {
+            try dbQueue.write { db in
+                try db.create(table: "data") { t in
+                    t.column("id", .integer).notNull()
+                    t.column("amount", .integer).notNull()
+                    t.column("date", .date).notNull()
+                    t.column("description", .text)
+                    t.column("category", .text).notNull()
+                }
             }
         }
 
         struct Data: Codable, FetchableRecord, PersistableRecord {
+            var id: Int
             var amount: Int
             var date: Date
             var description: String
@@ -56,13 +87,13 @@ func readData() -> [Transaction] {
         
         for tran in transaction  {
             if (tran.category == "income") {
-                transactions.append(Transaction(amount: tran.amount, date: tran.date, description: tran.description, category: .income))
+                transactions.append(Transaction(id: tran.id, amount: tran.amount, date: tran.date, description: tran.description, category: .income))
             }
             if (tran.category == "utilities") {
-                transactions.append(Transaction(amount: tran.amount, date: tran.date, description: tran.description, category: .utilities))
+                transactions.append(Transaction(id: tran.id, amount: tran.amount, date: tran.date, description: tran.description, category: .utilities))
             }
             if (tran.category == "groceries") {
-                transactions.append(Transaction(amount: tran.amount, date: tran.date, description: tran.description, category: .groceries))
+                transactions.append(Transaction(id: tran.id, amount: tran.amount, date: tran.date, description: tran.description, category: .groceries))
             }
         }
         
@@ -71,10 +102,12 @@ func readData() -> [Transaction] {
         print (error)
     }
     
+    print(transactions)
+    
     return transactions
 }
 
-struct TestData {
+struct TransactionData {
     static let transactions: [Transaction] = readData()
     static let account = Account(transactions: transactions)
 }

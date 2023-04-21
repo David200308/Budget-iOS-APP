@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import GRDB
 
 struct BudgetView: View {
 	@EnvironmentObject private var stateController: StateController
@@ -40,7 +41,7 @@ struct AccountView: View {
 	
 	var body: some View {
 		List {
-			Balance(amount: account.balance)
+            Balance(monthAmount: account.monthBalance)
 			ForEach(transactions) { transaction in
 				Row(transaction: transaction)
 			}
@@ -50,19 +51,32 @@ struct AccountView: View {
 
 // MARK: - Balance
 struct Balance: View {
-	var amount: Int
+	var monthAmount: Int
+//    var yearAmount: Int
 	
 	var body: some View {
-		VStack(alignment: .leading) {
-			Text("Balance")
-				.font(.callout)
-				.bold()
-				.foregroundColor(.secondary)
-			Text(amount.currencyFormat)
-				.font(.largeTitle)
-				.bold()
-		}
-		.padding(.vertical)
+//        HStack {
+            VStack(alignment: .leading) {
+                Text("Monthly Balance")
+                    .font(.callout)
+                    .bold()
+                    .foregroundColor(.secondary)
+                Text(monthAmount.currencyFormat)
+                    .font(.system(size: 30))
+                    .bold()
+            }
+            .padding(.vertical)
+//            VStack(alignment: .leading) {
+//                Text("Yearly Balance")
+//                    .font(.callout)
+//                    .bold()
+//                    .foregroundColor(.secondary)
+//                Text(yearAmount.currencyFormat)
+//                    .font(.system(size: 30))
+//                    .bold()
+//            }
+//            .padding(.vertical)
+//        }
 	}
 }
 
@@ -101,14 +115,17 @@ struct Row: View {
 
 // MARK: - Previews
 struct BudgetView_Previews: PreviewProvider {
-	static let account = TestData.account
+	static let account = TransactionData.account
 	
     static var previews: some View {
 		Group {
-			AccountView(account: account)
+            AccountView(account: account)
 			Group {
-				Balance(amount: account.balance)
-				Row(transaction: account.transactions[0])
+                Balance(monthAmount: account.monthBalance)
+//                ForEach(account.transactions, id: \.self){ transaction in
+//                    Row(transaction: transaction)
+//                }
+//                Row(transaction: account.transactions)
 			}
 			.previewLayout(.sizeThatFits)
 		}
