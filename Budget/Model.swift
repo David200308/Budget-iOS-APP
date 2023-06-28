@@ -20,21 +20,17 @@ struct Transaction: Identifiable {
 	let date: Date
 	let description: String
 	let category: Category
-    
-//    mutating func changeId() {
-//        id = count()
-//    }
+    var status: Int
 }
 
 struct Account {
     private (set) var transactions: [Transaction]
-    var uid = 0
     
     var monthBalance: Int {
         var monthBalance = 0
         let todayDate = Date()
         for transaction in transactions {
-            if (Calendar.current.isDate(todayDate, equalTo: transaction.date, toGranularity: .month) && Calendar.current.isDate(todayDate, equalTo: transaction.date, toGranularity: .year)) {
+            if (Calendar.current.isDate(todayDate, equalTo: transaction.date, toGranularity: .month) && Calendar.current.isDate(todayDate, equalTo: transaction.date, toGranularity: .year) && transaction.status == 1) {
                 monthBalance += transaction.amount
             }
         }
@@ -62,14 +58,12 @@ struct Account {
         do {
             let dbQueue = try DatabaseQueue(path: fileName())
             
-            try dbQueue.read { db in
-                uid = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM data") ?? 0
-            }
-            
-            uid += 1
-            
+            let uid = transactions.count + 1
+                        
             transactions.append(transaction)
-            print(transactions)
+            transactions[transactions.count - 1].id = uid
+//            print(transactions)
+            
             writeData(transaction: transaction, uid: uid)
         } catch {
             print(error)
@@ -78,28 +72,35 @@ struct Account {
         func writeData(transaction: Transaction, uid: Int) {
             do {
                 let dbQueue = try DatabaseQueue(path: fileName())
-                
-                struct Data: Codable, FetchableRecord, PersistableRecord {
-                    var id: Int
-                    var amount: Int
-                    var date: Date
-                    var description: String
-                    var category: String
-                }
-                
+
                 try dbQueue.write { db in
                     if (transaction.category == .income) {
-                        try Data(id: uid, amount: transaction.amount, date: Date(), description: transaction.description, category: "income").insert(db)
+                        var descr = transaction.description
+                        if (transaction.description == "") {
+                            descr = "N/A"
+                        }
+                        
+                        try db.execute(
+                            sql: "INSERT INTO data VALUES(" + String(uid) + ", " + String(transaction.amount) +  ", date('now'), '" + descr + "', 'income', 1)")
                     }
                     if (transaction.category == .utilities) {
-                        try Data(id: uid, amount: transaction.amount, date: Date(), description: transaction.description, category: "utilities").insert(db)
+                        var descr = transaction.description
+                        if (transaction.description == "") {
+                            descr = "N/A"
+                        }
+                        try db.execute(
+                            sql: "INSERT INTO data VALUES(" + String(uid) + ", " + String(transaction.amount) +  ", date('now'), '" + descr + "', 'utilities', 1)")
                     }
                     if (transaction.category == .groceries) {
-                        try Data(id: uid, amount: transaction.amount, date: Date(), description: transaction.description, category: "groceries").insert(db)
+                        var descr = transaction.description
+                        if (transaction.description == "") {
+                            descr = "N/A"
+                        }
+                        try db.execute(
+                            sql: "INSERT INTO data VALUES(" + String(uid) + ", " + String(transaction.amount) +  ", date('now'), '" + descr + "', 'groceries', 1)")
                     }
                 }
-                
-                
+                                
             } catch {
                 print (error)
             }
@@ -107,4 +108,29 @@ struct Account {
         }
         
     }
+    
+    
+    mutating func delete(id: Int) {
+        do {
+            let dbQueue = try DatabaseQueue(path: fileName())
+            
+            try dbQueue.write { db in
+                try db.execute(
+                    sql: "UPDATE data SET status = 0 WHERE id = " + String(id) + " AND status = 1")
+            }
+            
+//            print(transactions)
+            
+            for index in 0..<transactions.count {
+                if (transactions[index].id == id) {
+                    transactions[index].status = 0
+                }
+            }
+                        
+        } catch {
+            print(error)
+        }
+        
+    }
+    
 }

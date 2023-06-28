@@ -12,19 +12,29 @@ import GRDB
 struct BudgetView: View {
 	@EnvironmentObject private var stateController: StateController
 	@State private var addingNewTransaction = false
+    @State private var deleteTransaction = false
 	
 	var body: some View {
 		NavigationView {
 			AccountView(account: stateController.account)
-				.navigationBarTitle("Budget")
-				.navigationBarItems(trailing: Button(action: { self.addingNewTransaction = true }) {
+				.navigationBarTitle("ReBudget")
+                .navigationBarItems(trailing: Button(action: { self.addingNewTransaction = true }) {
 					Image(systemName: "plus")
 						.font(.title)
 				})
 				.sheet(isPresented: $addingNewTransaction) {
 					TransactionView()
 						.environmentObject(self.stateController)
-			}
+                }
+                .navigationBarItems(trailing: Button(action: { self.deleteTransaction = true }) {
+                    Image(systemName: "trash")
+                        .font(.title)
+                        .imageScale(.medium)
+                })
+                .sheet(isPresented: $deleteTransaction) {
+                    DeletionView()
+                        .environmentObject(self.stateController)
+                }
 		}
     }
 }
@@ -42,8 +52,10 @@ struct AccountView: View {
 	var body: some View {
 		List {
             Balance(monthAmount: account.monthBalance)
-			ForEach(transactions) { transaction in
-				Row(transaction: transaction)
+            ForEach(transactions) { transaction in
+                if (transaction.status == 1) {
+                    Row(transaction: transaction)
+                }
 			}
 		}
 	}
@@ -90,6 +102,8 @@ struct Row: View {
 			VStack(alignment: .leading, spacing: 4.0) {
 				Text(transaction.category.name)
 					.font(.headline)
+                Text("ID: " + String(transaction.id))
+                    .foregroundColor(.secondary)
 				Text(transaction.description)
 					.font(.caption)
 					.foregroundColor(.secondary)

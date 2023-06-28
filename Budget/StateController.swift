@@ -27,9 +27,13 @@ final class StateController : ObservableObject {
     }
     
 	func add(_ transaction: Transaction) {
-        var transaction = Transaction(id: count() + 1, amount: transaction.amount, date: transaction.date, description: transaction.description, category: transaction.category)
-        print("Test 2: ", transaction)
+        let transaction = Transaction(id: count() + 1, amount: transaction.amount, date: transaction.date, description: transaction.description, category: transaction.category, status: transaction.status)
+//        print("Test 2: ", transaction)
         account.add(transaction)
+    }
+    
+    func delete(id: Int) {
+        account.delete(id: id)
     }
 }
 
@@ -60,14 +64,12 @@ func readData() -> [Transaction] {
         
         if (isCreateTable == false) {
             try dbQueue.write { db in
-                try db.create(table: "data") { t in
-                    t.column("id", .integer).notNull()
-                    t.column("amount", .integer).notNull()
-                    t.column("date", .date).notNull()
-                    t.column("description", .text)
-                    t.column("category", .text).notNull()
-                }
+                try db.execute(
+                    sql: "CREATE TABLE IF NOT EXISTS data (id INT NOT NULL, amount INT NOT NULL, date Date NOT NULL, description TEXT, category TEXT NOT NULL, status INTEGER NOT NULL, PRIMARY KEY(id))")
             }
+            print("create table success")
+        } else {
+            print("table exist")
         }
 
         struct Data: Codable, FetchableRecord, PersistableRecord {
@@ -76,6 +78,7 @@ func readData() -> [Transaction] {
             var date: Date
             var description: String
             var category: String
+            var status: Int
         }
 
         
@@ -83,25 +86,25 @@ func readData() -> [Transaction] {
             try Data.fetchAll(db, sql: "SELECT * FROM data")
         }
         
-        print(transaction)
+//        print(transaction)
         
         for tran in transaction  {
             if (tran.category == "income") {
-                transactions.append(Transaction(id: tran.id, amount: tran.amount, date: tran.date, description: tran.description, category: .income))
+                transactions.append(Transaction(id: tran.id, amount: tran.amount, date: tran.date, description: tran.description, category: .income, status: tran.status))
             }
             if (tran.category == "utilities") {
-                transactions.append(Transaction(id: tran.id, amount: tran.amount, date: tran.date, description: tran.description, category: .utilities))
+                transactions.append(Transaction(id: tran.id, amount: tran.amount, date: tran.date, description: tran.description, category: .utilities, status: tran.status))
             }
             if (tran.category == "groceries") {
-                transactions.append(Transaction(id: tran.id, amount: tran.amount, date: tran.date, description: tran.description, category: .groceries))
+                transactions.append(Transaction(id: tran.id, amount: tran.amount, date: tran.date, description: tran.description, category: .groceries, status: tran.status))
             }
         }
-        
         
     } catch {
         print (error)
     }
     
+    transactions = transactions.reversed()
     print(transactions)
     
     return transactions

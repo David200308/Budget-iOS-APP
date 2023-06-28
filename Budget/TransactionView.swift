@@ -33,7 +33,7 @@ struct TransactionView: View {
 private extension TransactionView {
 	func addTransaction() {
 		let sign = selectedCategory == .income ? 1 : -1
-        let transaction = Transaction(id: Int(), amount: Int(amount)! * 100 * sign, date: Date(), description: description, category: selectedCategory)
+        let transaction = Transaction(id: Int(), amount: Int(amount)! * 100 * sign, date: Date(), description: description, category: selectedCategory, status: 1)
 		stateController.add(transaction)
 		dismiss()
 	}
@@ -129,5 +129,48 @@ struct TransactionView_Previews: PreviewProvider {
 			}
 			.previewLayout(.sizeThatFits)
 		}
+    }
+}
+
+// MARK: - Delete
+struct DeletionView: View {
+    @State private var id: String = ""
+    
+    @EnvironmentObject private var stateController: StateController
+    @Environment(\.presentationMode) private var presentationMode
+    
+    var body: some View {
+        NavigationView {
+            DeleteContent(id: $id)
+                .navigationBarTitle("Delete Transaction")
+                .navigationBarItems(leading: Button(action: { self.dismiss() }) {
+                    Text("Cancel")
+                    }, trailing: Button(action: deleteTransaction) {
+                        Text("Delete")
+                            .bold()
+                })
+        }
+    }
+}
+
+private extension DeletionView {
+    func deleteTransaction() {
+        stateController.delete(id: (id as NSString).integerValue)
+        dismiss()
+    }
+    
+    func dismiss() {
+        presentationMode.wrappedValue.dismiss()
+    }
+}
+
+// MARK: - Delete Content
+struct DeleteContent: View {
+    @Binding var id: String
+    
+    var body: some View {
+        List {
+            TextField("ID", text: $id)
+        }
     }
 }
