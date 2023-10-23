@@ -17,7 +17,7 @@ struct BudgetView: View {
 	var body: some View {
 		NavigationView {
 			AccountView(account: stateController.account)
-				.navigationBarTitle("ReBudget")
+				.navigationBarTitle("Budget")
                 .navigationBarItems(trailing: Button(action: { self.addingNewTransaction = true }) {
 					Image(systemName: "plus")
 						.font(.title)
@@ -26,39 +26,36 @@ struct BudgetView: View {
 					TransactionView()
 						.environmentObject(self.stateController)
                 }
-                .navigationBarItems(trailing: Button(action: { self.deleteTransaction = true }) {
-                    Image(systemName: "trash")
-                        .font(.title)
-                        .imageScale(.medium)
-                })
-                .sheet(isPresented: $deleteTransaction) {
-                    DeletionView()
-                        .environmentObject(self.stateController)
-                }
 		}
     }
 }
 
 // MARK: - AccountView
 struct AccountView: View {
-	let account: Account
-	
-	private var transactions: [Budget.Transaction] {
-		return account
-			.transactions
-			.sorted(by: { $0.date > $1.date })
-	}
-	
-	var body: some View {
-		List {
+    @EnvironmentObject private var stateController: StateController
+    let account: Account
+    
+    private var transactions: [Budget.Transaction] {
+        return account
+            .transactions
+            .sorted(by: { $0.date > $1.date })
+    }
+    
+    var body: some View {
+        List {
             Balance(monthAmount: account.monthBalance)
-            ForEach(transactions) { transaction in
-                if (transaction.status == 1) {
-                    Row(transaction: transaction)
+            ForEach(transactions.indices, id: \.self) { index in
+                if transactions[index].status == 1 {
+                    Row(transaction: transactions[index])
                 }
-			}
-		}
-	}
+            }
+            .onDelete(perform: { indexSet in
+                indexSet.forEach { index in
+                    stateController.delete(id: transactions[index].id)
+                }
+            })
+        }
+    }
 }
 
 // MARK: - Balance
@@ -102,8 +99,6 @@ struct Row: View {
 			VStack(alignment: .leading, spacing: 4.0) {
 				Text(transaction.category.name)
 					.font(.headline)
-                Text("ID: " + String(transaction.id))
-                    .foregroundColor(.secondary)
 				Text(transaction.description)
 					.font(.caption)
 					.foregroundColor(.secondary)
