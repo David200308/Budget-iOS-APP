@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct TransactionView: View {
 	@State private var amount: String = ""
@@ -32,8 +33,8 @@ struct TransactionView: View {
 
 private extension TransactionView {
 	func addTransaction() {
-		let sign = selectedCategory == .income ? 1 : -1
-        let transaction = Transaction(id: Int(), amount: Int(amount)! * 100 * sign, date: Date(), description: description, category: selectedCategory, status: 1)
+        let sign = selectedCategory == .income ? 1.0 : -1.0
+        let transaction = Transaction(id: Int(), amount: Double(amount)! * 100.0 * sign, date: Date(), description: description, category: selectedCategory, status: 1)
 		stateController.add(transaction)
 		dismiss()
 	}
@@ -69,7 +70,7 @@ struct Amount: View {
 				.font(.callout)
 				.bold()
 				.foregroundColor(.secondary)
-			TextField(0.currencyFormat, text: $amount)
+            TextField(Double(0).currencyFormat, text: $amount)
 				.multilineTextAlignment(.trailing)
 				.keyboardType(.decimalPad)
 				.font(Font.largeTitle.bold())

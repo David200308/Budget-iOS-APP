@@ -65,7 +65,7 @@ func readData() -> [Transaction] {
         if (isCreateTable == false) {
             try dbQueue.write { db in
                 try db.execute(
-                    sql: "CREATE TABLE IF NOT EXISTS data (id INT NOT NULL, amount INT NOT NULL, date Date NOT NULL, description TEXT, category TEXT NOT NULL, status INTEGER NOT NULL, PRIMARY KEY(id))")
+                    sql: "CREATE TABLE IF NOT EXISTS data (id INTEGER NOT NULL, amount REAL NOT NULL, date Date NOT NULL, description TEXT, category TEXT NOT NULL, status INTEGER NOT NULL, PRIMARY KEY(id))")
             }
             print("create table success")
         } else {
@@ -74,7 +74,7 @@ func readData() -> [Transaction] {
 
         struct Data: Codable, FetchableRecord, PersistableRecord {
             var id: Int
-            var amount: Int
+            var amount: Double
             var date: Date
             var description: String
             var category: String

@@ -16,7 +16,7 @@ struct Transaction: Identifiable {
 	}
 	
     var id: Int
-	let amount: Int
+	let amount: Double
 	let date: Date
 	let description: String
 	let category: Category
@@ -26,15 +26,15 @@ struct Transaction: Identifiable {
 struct Account {
     private (set) var transactions: [Transaction]
     
-    var monthBalance: Int {
-        var monthBalance = 0
+    var monthBalance: Double {
+        var monthBalance = 0.0
         let todayDate = Date()
         for transaction in transactions {
             if (Calendar.current.isDate(todayDate, equalTo: transaction.date, toGranularity: .month) && Calendar.current.isDate(todayDate, equalTo: transaction.date, toGranularity: .year) && transaction.status == 1) {
-                monthBalance += transaction.amount
+                monthBalance += Double(transaction.amount)
             }
         }
-        return monthBalance
+        return Double(monthBalance)
     }
     
 //    var yearBalance: Int {
@@ -118,9 +118,7 @@ struct Account {
                 try db.execute(
                     sql: "UPDATE data SET status = 0 WHERE id = " + String(id) + " AND status = 1")
             }
-            
-//            print(transactions)
-            
+                        
             for index in 0..<transactions.count {
                 if (transactions[index].id == id) {
                     transactions[index].status = 0
@@ -133,4 +131,41 @@ struct Account {
         
     }
     
+//    mutating func exportCSV() {
+//        do {
+//            let dbQueue = try DatabaseQueue(path: fileName())
+//
+//            struct Data: Codable, FetchableRecord, PersistableRecord {
+//                var id: Int
+//                var amount: Int
+//                var date: Date
+//                var description: String
+//                var category: String
+//                var status: Int
+//            }
+//
+//            let transaction: [Data] = try dbQueue.read { db in
+//                try Data.fetchAll(db, sql: "SELECT * FROM data WHERE status = 0")
+//            }
+//
+//            // Create a CSV file path
+//            let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("transactions.csv")
+//
+//            // Prepare the CSV data
+//            var csvText = "ID,Amount,Date,Description,Category,Status\n"
+//            for data in transaction {
+//                let row = "\(data.id),\(data.amount),\(data.date),\(data.description),\(data.category),\(data.status)\n"
+//                csvText.append(row)
+//            }
+//
+//            // Write the CSV data to the file
+//            try csvText.write(to: fileURL!, atomically: true, encoding: .utf8)
+//
+//            print("CSV file exported successfully.")
+//
+//        } catch {
+//            print(error)
+//        }
+//    }
+//    
 }
