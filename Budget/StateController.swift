@@ -28,7 +28,6 @@ final class StateController : ObservableObject {
     
 	func add(_ transaction: Transaction) {
         let transaction = Transaction(id: count() + 1, amount: transaction.amount, date: transaction.date, description: transaction.description, category: transaction.category, status: transaction.status)
-//        print("Test 2: ", transaction)
         account.add(transaction)
     }
     
@@ -50,26 +49,45 @@ func readData() -> [Transaction] {
     do {
         let dbQueue = try DatabaseQueue(path: fileName())
         
-        var isCreateTable = false
+        var isCreateDataTable = false
+        var isCreateStatisticTable = false
         
         try dbQueue.read { db in
             if (try db.tableExists("data") == false) {
-                print("Table Not Create")
-                isCreateTable = false
+//                print("Data Table Not Create")
+                isCreateDataTable = false
             } else {
-                print("Already Created")
-                isCreateTable = true
+//                print("Data Table Already Created")
+                isCreateDataTable = true
+            }
+            
+            if (try db.tableExists("statistic") == false) {
+//                print("Statistic Table Not Create")
+                isCreateStatisticTable = false
+            } else {
+//                print("Already Created")
+                isCreateStatisticTable = true
             }
         }
         
-        if (isCreateTable == false) {
+        if (isCreateDataTable == false) {
             try dbQueue.write { db in
                 try db.execute(
                     sql: "CREATE TABLE IF NOT EXISTS data (id INTEGER NOT NULL, amount REAL NOT NULL, date Date NOT NULL, description TEXT, category TEXT NOT NULL, status INTEGER NOT NULL, PRIMARY KEY(id))")
             }
-            print("create table success")
+            print("create Data table success")
         } else {
-            print("table exist")
+            print("Data table exist")
+        }
+        
+        if (isCreateStatisticTable == false) {
+            try dbQueue.write { db in
+                try db.execute(
+                    sql: "CREATE TABLE IF NOT EXISTS statistic (id INTEGER primary key, year TEXT NOT NULL, month TEXT NOT NULL, amount REAL NOT NULL)")
+            }
+            print("create Statistic table success")
+        } else {
+            print("Statistic table exist")
         }
 
         struct Data: Codable, FetchableRecord, PersistableRecord {
@@ -81,7 +99,6 @@ func readData() -> [Transaction] {
             var status: Int
         }
 
-        
         let transaction: [Data] = try dbQueue.read { db in
             try Data.fetchAll(db, sql: "SELECT * FROM data")
         }
@@ -110,7 +127,39 @@ func readData() -> [Transaction] {
     return transactions
 }
 
+
+func readStatisticData() -> [Statistic] {
+    var statistics = [Statistic]()
+    
+    do {
+        let dbQueue = try DatabaseQueue(path: fileName())
+        struct StatisticData: Codable, FetchableRecord, PersistableRecord {
+            var id: Int
+            var year: String
+            var month: String
+            var amount: Double
+        }
+        
+        let data: [StatisticData] = try dbQueue.read { db in
+            try StatisticData.fetchAll(db, sql: "SELECT * FROM statistic")
+        }
+        
+        for d in data  {
+            statistics.append(Statistic(id: d.id, year: d.year, month: d.month, amount: d.amount))
+        }
+    } catch {
+        print (error)
+    }
+    
+    return statistics
+}
+
+
 struct TransactionData {
     static let transactions: [Transaction] = readData()
     static let account = Account(transactions: transactions)
+}
+
+struct StatisticData {
+    static let statistics: [Statistic] = readStatisticData()
 }

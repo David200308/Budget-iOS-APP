@@ -13,7 +13,8 @@ import GRDB
 struct BudgetView: View {
 	@EnvironmentObject private var stateController: StateController
 	@State private var addingNewTransaction = false
-    @State private var exportFile = false
+    @State private var monthReporting = false
+//    @State private var exportFile = false
 	
 	var body: some View {
 		NavigationView {
@@ -23,19 +24,27 @@ struct BudgetView: View {
 					Image(systemName: "plus")
 						.font(.title)
 				})
+            
+                .navigationBarItems(trailing: Button(action: { self.monthReporting = true }) {
+                    Image(systemName: "doc.fill")
+                        .font(.title)
+                        .imageScale(.medium)
+                })
+            
 //                .navigationBarItems(trailing: Button(action: { self.exportFile = true }) {
 //                    Image(systemName: "square.and.arrow.up")
 //                        .font(.title)
 //                        .imageScale(.medium)
 //                })
+            
 				.sheet(isPresented: $addingNewTransaction) {
 					TransactionView()
 						.environmentObject(self.stateController)
                 }
-//                .sheet(isPresented: $exportFile) {
-//                    ExportView()
-//                        .environmentObject(self.stateController)
-//                }
+                .sheet(isPresented: $monthReporting) {
+                    ReportingView()
+                        .environmentObject(self.stateController)
+                }
 		}
     }
 }

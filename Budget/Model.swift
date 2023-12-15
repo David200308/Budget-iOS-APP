@@ -23,18 +23,61 @@ struct Transaction: Identifiable {
     var status: Int
 }
 
+struct Statistic: Identifiable, Codable, FetchableRecord, PersistableRecord {
+    var id: Int
+    let year: String
+    let month: String
+    let amount: Double
+}
+
+
 struct Account {
     private (set) var transactions: [Transaction]
+    
+    func fileName() -> String {
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as NSString
+        let dbPath = documentsPath.appendingPathComponent("data.sqlite3")
+        return dbPath;
+    }
     
     var monthBalance: Double {
         var monthBalance = 0.0
         let todayDate = Date()
+        
         for transaction in transactions {
-            if (Calendar.current.isDate(todayDate, equalTo: transaction.date, toGranularity: .month) && Calendar.current.isDate(todayDate, equalTo: transaction.date, toGranularity: .year) && transaction.status == 1) {
+            if Calendar.current.isDate(todayDate, equalTo: transaction.date, toGranularity: .month)
+                && Calendar.current.isDate(todayDate, equalTo: transaction.date, toGranularity: .year)
+                && transaction.status == 1 {
                 monthBalance += Double(transaction.amount)
             }
         }
-        return Double(monthBalance)
+        
+        do {
+            let dbQueue = try DatabaseQueue(path: fileName())
+            var flag = false
+            
+            try dbQueue.read { db in
+                let sql = "SELECT * FROM statistic WHERE year = ? AND month = ?"
+                let rows = try Statistic.fetchCursor(db, sql: sql, arguments: [Calendar.current.component(.year, from: todayDate), Calendar.current.component(.month, from: todayDate)])
+                flag = try rows.next() != nil
+                
+            }
+            
+            try dbQueue.write { db in
+                if flag {
+                    let sql = "UPDATE statistic SET amount = ? WHERE year = ? AND month = ?"
+                    try db.execute(sql: sql, arguments: [monthBalance, Calendar.current.component(.year, from: todayDate), Calendar.current.component(.month, from: todayDate)])
+                } else {
+                    let sql = "INSERT INTO statistic(year, month, amount) VALUES (?, ?, ?)"
+                    try db.execute(sql: sql, arguments: [Calendar.current.component(.year, from: todayDate), Calendar.current.component(.month, from: todayDate), monthBalance])
+                }
+            }
+            
+        } catch {
+            print(error)
+        }
+        
+        return monthBalance
     }
     
 //    var yearBalance: Int {
@@ -48,11 +91,6 @@ struct Account {
 //        return yearBalance
 //    }
     
-    func fileName() -> String {
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as NSString
-        let dbPath = documentsPath.appendingPathComponent("data.sqlite3")
-        return dbPath;
-    }
     
     mutating func add(_ transaction: Transaction) {
         do {

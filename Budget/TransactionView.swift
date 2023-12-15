@@ -158,22 +158,3 @@ struct CategoryButton: View {
 	}
 }
 
-//// MARK: - Previews
-//struct TransactionView_Previews: PreviewProvider {
-//    static var previews: some View {
-//		Group {
-//			TransactionView()
-//			TransactionContent(amount: .constant(""), selectedCategory: .constant(.groceries), description: .constant(""))
-//			Group {
-//				Amount(amount: .constant(""))
-//				CategorySelection(selectedCatergory: .constant(.groceries))
-//				HStack {
-//					CategoryButton(category: .groceries, action: {})
-//					CategoryButton(category: .groceries, selected: true, action: {})
-//				}
-//				.padding()
-//			}
-//			.previewLayout(.sizeThatFits)
-//		}
-//    }
-//}
