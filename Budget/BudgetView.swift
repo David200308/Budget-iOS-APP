@@ -9,6 +9,7 @@
 import SwiftUI
 import GRDB
 
+@available(iOS 14.0, *)
 struct BudgetView: View {
 	@EnvironmentObject private var stateController: StateController
 	@State private var addingNewTransaction = false

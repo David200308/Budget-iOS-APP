@@ -9,9 +9,11 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+@available(iOS 14.0, *)
 struct TransactionView: View {
 	@State private var amount: String = ""
 	@State private var selectedCategory: Transaction.Category = .groceries
+    @State private var selectedDate: Date = Date()
 	@State private var description: String = ""
 	
 	@EnvironmentObject private var stateController: StateController
@@ -19,7 +21,7 @@ struct TransactionView: View {
 	
 	var body: some View {
 		NavigationView {
-			TransactionContent(amount: $amount, selectedCategory: $selectedCategory, description: $description)
+            TransactionContent(amount: $amount, selectedCategory: $selectedCategory, description: $description, selectedDate: $selectedDate)
 				.navigationBarTitle("New Transaction")
 				.navigationBarItems(leading: Button(action: { self.dismiss() }) {
 					Text("Cancel")
@@ -31,10 +33,12 @@ struct TransactionView: View {
 	}
 }
 
-private extension TransactionView {
+@available(iOS 14.0, *)
+extension TransactionView {
 	func addTransaction() {
         let sign = selectedCategory == .income ? 1.0 : -1.0
-        let transaction = Transaction(id: Int(), amount: Double(amount)! * 100.0 * sign, date: Date(), description: description, category: selectedCategory, status: 1)
+        let transaction = Transaction(id: Int(), amount: Double(amount)! * 100.0 * sign, date: selectedDate, description: description, category: selectedCategory, status: 1)
+        print(transaction)
 		stateController.add(transaction)
 		dismiss()
 	}
@@ -45,19 +49,60 @@ private extension TransactionView {
 }
 
 // MARK: - Content
+//struct TransactionContent: View {
+//	@Binding var amount: String
+//	@Binding var selectedCategory: Transaction.Category
+//	@Binding var description: String
+//    @Binding var selectedDate: String
+//    @State var date: Date = Date()
+//    
+//    let dateFormatter: () = DateFormatter().dateFormat = "YY-MM-dd"
+//	
+//	var body: some View {
+//		List {
+//			Amount(amount: $amount)
+//			CategorySelection(selectedCatergory: $selectedCategory)
+//				.buttonStyle(PlainButtonStyle())
+//            DatePicker(
+//                "Date",
+//                selection: $selectedDate,
+//                displayedComponents: [.date]
+//            )
+//			TextField("Description", text: $description)
+//		}
+//	}
+//}
+
+@available(iOS 14.0, *)
 struct TransactionContent: View {
-	@Binding var amount: String
-	@Binding var selectedCategory: Transaction.Category
-	@Binding var description: String
-	
-	var body: some View {
-		List {
-			Amount(amount: $amount)
-			CategorySelection(selectedCatergory: $selectedCategory)
-				.buttonStyle(PlainButtonStyle())
-			TextField("Description", text: $description)
-		}
-	}
+    @Binding var amount: String
+    @Binding var selectedCategory: Transaction.Category
+    @Binding var description: String
+    @Binding var selectedDate: Date
+    
+    let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+    
+    var body: some View {
+        List {
+            Amount(amount: $amount)
+            CategorySelection(selectedCatergory: $selectedCategory)
+                .buttonStyle(PlainButtonStyle())
+            DatePicker(
+                "Date",
+                selection: $selectedDate,
+                displayedComponents: [.date]
+            )
+            .onChange(of: selectedDate, perform: { value in
+                let formattedDate = dateFormatter.string(from: value)
+                selectedDate = dateFormatter.date(from: formattedDate) ?? value
+            })
+            TextField("Description", text: $description)
+        }
+    }
 }
 
 // MARK: - Amount
@@ -113,22 +158,22 @@ struct CategoryButton: View {
 	}
 }
 
-// MARK: - Previews
-struct TransactionView_Previews: PreviewProvider {
-    static var previews: some View {
-		Group {
-			TransactionView()
-			TransactionContent(amount: .constant(""), selectedCategory: .constant(.groceries), description: .constant(""))
-			Group {
-				Amount(amount: .constant(""))
-				CategorySelection(selectedCatergory: .constant(.groceries))
-				HStack {
-					CategoryButton(category: .groceries, action: {})
-					CategoryButton(category: .groceries, selected: true, action: {})
-				}
-				.padding()
-			}
-			.previewLayout(.sizeThatFits)
-		}
-    }
-}
+//// MARK: - Previews
+//struct TransactionView_Previews: PreviewProvider {
+//    static var previews: some View {
+//		Group {
+//			TransactionView()
+//			TransactionContent(amount: .constant(""), selectedCategory: .constant(.groceries), description: .constant(""))
+//			Group {
+//				Amount(amount: .constant(""))
+//				CategorySelection(selectedCatergory: .constant(.groceries))
+//				HStack {
+//					CategoryButton(category: .groceries, action: {})
+//					CategoryButton(category: .groceries, selected: true, action: {})
+//				}
+//				.padding()
+//			}
+//			.previewLayout(.sizeThatFits)
+//		}
+//    }
+//}

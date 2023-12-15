@@ -77,34 +77,34 @@ struct Account {
                     if (transaction.category == .income) {
                         var descr = transaction.description
                         if (transaction.description == "") {
-                            descr = "N/A"
+                            descr = " "
                         }
                         
-                        try db.execute(
-                            sql: "INSERT INTO data VALUES(" + String(uid) + ", " + String(transaction.amount) +  ", date('now'), '" + descr + "', 'income', 1)")
+                        let sql = "INSERT INTO data VALUES (?, ?, ?, ?, ?, ?)"
+                        try db.execute(sql: sql, arguments: [uid, transaction.amount, transaction.date, descr, "income", 1])
                     }
                     if (transaction.category == .utilities) {
                         var descr = transaction.description
                         if (transaction.description == "") {
-                            descr = "N/A"
+                            descr = " "
                         }
-                        try db.execute(
-                            sql: "INSERT INTO data VALUES(" + String(uid) + ", " + String(transaction.amount) +  ", date('now'), '" + descr + "', 'utilities', 1)")
+                        
+                        let sql = "INSERT INTO data VALUES (?, ?, ?, ?, ?, ?)"
+                        try db.execute(sql: sql, arguments: [uid, transaction.amount, transaction.date, descr, "utilities", 1])
                     }
                     if (transaction.category == .groceries) {
                         var descr = transaction.description
                         if (transaction.description == "") {
-                            descr = "N/A"
+                            descr = " "
                         }
-                        try db.execute(
-                            sql: "INSERT INTO data VALUES(" + String(uid) + ", " + String(transaction.amount) +  ", date('now'), '" + descr + "', 'groceries', 1)")
+                        
+                        let sql = "INSERT INTO data VALUES (?, ?, ?, ?, ?, ?)"
+                        try db.execute(sql: sql, arguments: [uid, transaction.amount, transaction.date, descr, "groceries", 1])
                     }
                 }
-                                
             } catch {
-                print (error)
+                print(error)
             }
-            
         }
         
     }
@@ -116,7 +116,9 @@ struct Account {
             
             try dbQueue.write { db in
                 try db.execute(
-                    sql: "UPDATE data SET status = 0 WHERE id = " + String(id) + " AND status = 1")
+                    sql: "DELETE FROM data WHERE id = ? AND status = 1",
+                    arguments: [id]
+                )
             }
                         
             for index in 0..<transactions.count {
