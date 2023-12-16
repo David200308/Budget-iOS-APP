@@ -40,6 +40,18 @@ struct Account {
         return dbPath;
     }
     
+    var yearBalance: Double {
+        var yearBalance = 0.0
+        let todayDate = Date()
+        for transaction in transactions {
+            if Calendar.current.isDate(todayDate, equalTo: transaction.date, toGranularity: .year)
+                && transaction.status == 1 {
+                yearBalance += Double(transaction.amount)
+            }
+        }
+        return yearBalance
+    }
+    
     var monthBalance: Double {
         var monthBalance = 0.0
         let todayDate = Date()
@@ -54,20 +66,31 @@ struct Account {
         
         do {
             let dbQueue = try DatabaseQueue(path: fileName())
-            var flag = false
+            var monthFlag = false
+            var yearFlag = false
             
             try dbQueue.read { db in
                 let sql = "SELECT * FROM statistic WHERE year = ? AND month = ?"
-                let rows = try Statistic.fetchCursor(db, sql: sql, arguments: [Calendar.current.component(.year, from: todayDate), Calendar.current.component(.month, from: todayDate)])
-                flag = try rows.next() != nil
+                let monthRows = try Statistic.fetchCursor(db, sql: sql, arguments: [Calendar.current.component(.year, from: todayDate), Calendar.current.component(.month, from: todayDate)])
+                monthFlag = try monthRows.next() != nil
                 
+                let yearSql = "SELECT * FROM statistic WHERE year = ? AND month = ?"
+                let yearRows = try Statistic.fetchCursor(db, sql: sql, arguments: [Calendar.current.component(.year, from: todayDate), "All"])
+                yearFlag = try yearRows.next() != nil
             }
             
             try dbQueue.write { db in
-                if flag {
+                if monthFlag && yearFlag {
                     let sql = "UPDATE statistic SET amount = ? WHERE year = ? AND month = ?"
                     try db.execute(sql: sql, arguments: [monthBalance, Calendar.current.component(.year, from: todayDate), Calendar.current.component(.month, from: todayDate)])
+                    
+                    let yearSql = "UPDATE statistic SET amount = ? WHERE year = ? AND month = ?"
+                    try db.execute(sql: yearSql, arguments: [yearBalance, Calendar.current.component(.year, from: todayDate), "All"])
+                    
                 } else {
+                    let yearSql = "INSERT INTO statistic(year, month, amount) VALUES (?, ?, ?)"
+                    try db.execute(sql: yearSql, arguments: [Calendar.current.component(.year, from: todayDate), "All", yearBalance])
+                    
                     let sql = "INSERT INTO statistic(year, month, amount) VALUES (?, ?, ?)"
                     try db.execute(sql: sql, arguments: [Calendar.current.component(.year, from: todayDate), Calendar.current.component(.month, from: todayDate), monthBalance])
                 }
@@ -80,16 +103,7 @@ struct Account {
         return monthBalance
     }
     
-//    var yearBalance: Int {
-//        var yearBalance = 0
-//        let todayDate = Date()
-//        for transaction in transactions {
-//            if (Calendar.current.isDate(todayDate, equalTo: transaction.date, toGranularity: .year)) {
-//                yearBalance += transaction.amount
-//            }
-//        }
-//        return yearBalance
-//    }
+
     
     
     mutating func add(_ transaction: Transaction) {
