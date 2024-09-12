@@ -185,41 +185,35 @@ struct Account {
         
     }
     
-//    mutating func exportCSV() {
-//        do {
-//            let dbQueue = try DatabaseQueue(path: fileName())
-//
-//            struct Data: Codable, FetchableRecord, PersistableRecord {
-//                var id: Int
-//                var amount: Int
-//                var date: Date
-//                var description: String
-//                var category: String
-//                var status: Int
-//            }
-//
-//            let transaction: [Data] = try dbQueue.read { db in
-//                try Data.fetchAll(db, sql: "SELECT * FROM data WHERE status = 0")
-//            }
-//
-//            // Create a CSV file path
-//            let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("transactions.csv")
-//
-//            // Prepare the CSV data
-//            var csvText = "ID,Amount,Date,Description,Category,Status\n"
-//            for data in transaction {
-//                let row = "\(data.id),\(data.amount),\(data.date),\(data.description),\(data.category),\(data.status)\n"
-//                csvText.append(row)
-//            }
-//
-//            // Write the CSV data to the file
-//            try csvText.write(to: fileURL!, atomically: true, encoding: .utf8)
-//
-//            print("CSV file exported successfully.")
-//
-//        } catch {
-//            print(error)
-//        }
-//    }
-//    
+    mutating func exportCSVData() -> Data? {
+        do {
+            let dbQueue = try DatabaseQueue(path: fileName())
+            
+            struct Data: Codable, FetchableRecord, PersistableRecord {
+                var id: Int
+                var amount: Int
+                var date: Date
+                var description: String
+                var category: String
+                var status: Int
+            }
+
+            let transaction: [Data] = try dbQueue.read { db in
+                try Data.fetchAll(db, sql: "SELECT * FROM data WHERE status = 1")
+            }
+                        
+            var csvText = "ID,Amount,Date,Description,Category,Status\n"
+            for data in transaction {
+                let row = "\(data.id),\(data.amount),\(data.date),\(data.description),\(data.category),\(data.status)\n"
+                csvText.append(row)
+            }
+            
+            return csvText.data(using: .utf8)
+            
+        } catch {
+            print("Failed to export CSV:", error)
+            return nil
+        }
+    }
+    
 }

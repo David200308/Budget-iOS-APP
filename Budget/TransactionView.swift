@@ -9,7 +9,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-@available(iOS 14.0, *)
+@available(iOS 16.0, *)
 struct TransactionView: View {
 	@State private var amount: String = ""
 	@State private var selectedCategory: Transaction.Category = .groceries
@@ -33,7 +33,7 @@ struct TransactionView: View {
 	}
 }
 
-@available(iOS 14.0, *)
+@available(iOS 16.0, *)
 extension TransactionView {
 	func addTransaction() {
         let sign = selectedCategory == .income ? 1.0 : -1.0
@@ -73,7 +73,7 @@ extension TransactionView {
 //	}
 //}
 
-@available(iOS 14.0, *)
+@available(iOS 16.0, *)
 struct TransactionContent: View {
     @Binding var amount: String
     @Binding var selectedCategory: Transaction.Category

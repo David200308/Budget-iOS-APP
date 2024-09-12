@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import Charts
 import UniformTypeIdentifiers
 
 struct ReportingView: View {
@@ -87,7 +88,23 @@ struct ReportContent: View {
     @Binding var amount: String
     var statistics: [Statistic]
 
+    @available(iOS 16.0, *)
     var body: some View {
+        VStack {
+            GroupBox("Monthly Expense") {
+                Chart {
+                    ForEach(statistics.filter({ $0.month != "All" })) { data in
+                        BarMark(
+                            x: .value("Month", data.year + " - " + data.month),
+                            y: .value("Expense", data.amount / (-100)),
+                            width: .fixed(20)
+                        )
+                    }
+                }
+            }
+            .padding()
+        }
+
         List {
             ForEach(statistics) { stat in
                 if stat.month == "All" {

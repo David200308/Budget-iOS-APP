@@ -8,44 +8,68 @@
 
 import SwiftUI
 import GRDB
+import UniformTypeIdentifiers
 
-@available(iOS 14.0, *)
+@available(iOS 16.0, *)
 struct BudgetView: View {
-	@EnvironmentObject private var stateController: StateController
-	@State private var addingNewTransaction = false
+    @EnvironmentObject private var stateController: StateController
+    @State private var addingNewTransaction = false
     @State private var monthReporting = false
-//    @State private var exportFile = false
-	
-	var body: some View {
-		NavigationView {
-			AccountView(account: stateController.account)
-				.navigationBarTitle("Budget")
-                .navigationBarItems(trailing: Button(action: { self.addingNewTransaction = true }) {
-					Image(systemName: "plus")
-						.font(.title)
-				})
-            
-                .navigationBarItems(trailing: Button(action: { self.monthReporting = true }) {
-                    Image(systemName: "doc.fill")
-                        .font(.title)
-                        .imageScale(.medium)
-                })
-            
-//                .navigationBarItems(trailing: Button(action: { self.exportFile = true }) {
-//                    Image(systemName: "square.and.arrow.up")
-//                        .font(.title)
-//                        .imageScale(.medium)
-//                })
-            
-				.sheet(isPresented: $addingNewTransaction) {
-					TransactionView()
-						.environmentObject(self.stateController)
-                }
-                .sheet(isPresented: $monthReporting) {
-                    ReportingView()
-                        .environmentObject(self.stateController)
-                }
-		}
+    @State private var exportFile = false
+    @State private var csvData: Data? = nil
+    @State private var showFileExporter = false
+
+    var body: some View {
+            NavigationView {
+                AccountView(account: stateController.account)
+                    .navigationTitle("Budget")
+                    .toolbar {
+                        ToolbarItemGroup(placement: .navigationBarTrailing) {
+                            Button(action: exportCSV) {
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(.title)
+                                    .imageScale(.medium)
+                            }
+                            
+                            Button(action: { self.monthReporting = true }) {
+                                Image(systemName: "doc.fill")
+                                    .font(.title)
+                                    .imageScale(.medium)
+                            }
+                            
+                            Button(action: { self.addingNewTransaction = true }) {
+                                Image(systemName: "plus")
+                                    .font(.title)
+                            }
+                        }
+                    }
+                    .sheet(isPresented: $addingNewTransaction) {
+                        TransactionView()
+                            .environmentObject(self.stateController)
+                    }
+                    .sheet(isPresented: $monthReporting) {
+                        ReportingView()
+                            .environmentObject(self.stateController)
+                    }
+                    .fileExporter(
+                        isPresented: $showFileExporter,
+                        document: CSVDocument(data: csvData ?? Data()),
+                        contentType: .commaSeparatedText,
+                        defaultFilename: "transactions"
+                    ) { result in
+                        switch result {
+                        case .success(let url):
+                            print("File saved to: \(url)")
+                        case .failure(let error):
+                            print("Failed to save file: \(error.localizedDescription)")
+                        }
+                    }
+            }
+        }
+    
+    private func exportCSV() {
+        csvData = stateController.account.exportCSVData()
+        showFileExporter = csvData != nil
     }
 }
 
@@ -139,6 +163,24 @@ struct Row: View {
 	func color(for amount: Int) -> Color {
 		amount > 0 ? .blue : .primary
 	}
+}
+
+// MARK: - CSV Document
+struct CSVDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [.commaSeparatedText] }
+    var data: Data
+
+    init(data: Data) {
+        self.data = data
+    }
+
+    init(configuration: ReadConfiguration) throws {
+        data = configuration.file.regularFileContents ?? Data()
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        return .init(regularFileWithContents: data)
+    }
 }
 
 //// MARK: - Previews
