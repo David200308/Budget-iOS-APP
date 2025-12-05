@@ -22,7 +22,7 @@ struct BudgetView: View {
     var body: some View {
             NavigationView {
                 AccountView(account: stateController.account)
-                    .navigationTitle("Budget")
+                    .navigationTitle("Expense")
                     .toolbar {
                         ToolbarItemGroup(placement: .navigationBarTrailing) {
                             Button(action: exportCSV) {
