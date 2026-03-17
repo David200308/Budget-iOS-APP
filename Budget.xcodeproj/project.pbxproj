@@ -19,8 +19,13 @@
 		951D2BC6239A7273003E2B87 /* StateController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 951D2BC5239A7273003E2B87 /* StateController.swift */; };
 		958C85E4239AA25D0087DB7C /* TransactionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 958C85E3239AA25D0087DB7C /* TransactionView.swift */; };
 		BE37BA932B2CA9A30094CF7B /* ReportingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE37BA922B2CA9A30094CF7B /* ReportingView.swift */; };
-		BE41404F29B4E4F000E47CD4 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = BE41404E29B4E4F000E47CD4 /* GRDB */; };
-		BE41405929B592D900E47CD4 /* data.sqlite3 in Resources */ = {isa = PBXBuildFile; fileRef = BE41405829B592D900E47CD4 /* data.sqlite3 */; };
+		BE41405329B4EF6500E47CD4 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BE41405429B4EF6600E47CD4 /* libsqlite3.tbd */; };
+		CD000020239A5C58003E2B87 /* CDTransaction+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD000010239A5C58003E2B87 /* CDTransaction+CoreDataClass.swift */; };
+		CD000021239A5C58003E2B87 /* CDTransaction+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD000011239A5C58003E2B87 /* CDTransaction+CoreDataProperties.swift */; };
+		CD000022239A5C58003E2B87 /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD000012239A5C58003E2B87 /* PersistenceController.swift */; };
+		CD000023239A5C58003E2B87 /* MigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD000013239A5C58003E2B87 /* MigrationService.swift */; };
+		CD000024239A5C58003E2B87 /* iCloudSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD000014239A5C58003E2B87 /* iCloudSettingsView.swift */; };
+		CD000025239A5C58003E2B87 /* Budget.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = CD000015239A5C58003E2B87 /* Budget.xcdatamodeld */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,9 +43,14 @@
 		951D2BC5239A7273003E2B87 /* StateController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateController.swift; sourceTree = "<group>"; };
 		958C85E3239AA25D0087DB7C /* TransactionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionView.swift; sourceTree = "<group>"; };
 		BE37BA922B2CA9A30094CF7B /* ReportingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportingView.swift; sourceTree = "<group>"; };
-		BE41405329B4EF6500E47CD4 /* libsqlite3.0.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.0.tbd; path = usr/lib/libsqlite3.0.tbd; sourceTree = SDKROOT; };
 		BE41405429B4EF6600E47CD4 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
-		BE41405829B592D900E47CD4 /* data.sqlite3 */ = {isa = PBXFileReference; lastKnownFileType = text; path = data.sqlite3; sourceTree = "<group>"; };
+		CD000010239A5C58003E2B87 /* CDTransaction+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CDTransaction+CoreDataClass.swift"; sourceTree = "<group>"; };
+		CD000011239A5C58003E2B87 /* CDTransaction+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CDTransaction+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		CD000012239A5C58003E2B87 /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
+		CD000013239A5C58003E2B87 /* MigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationService.swift; sourceTree = "<group>"; };
+		CD000014239A5C58003E2B87 /* iCloudSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudSettingsView.swift; sourceTree = "<group>"; };
+		CD000015239A5C58003E2B87 /* Budget.xcdatamodeld */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodeld; path = Budget.xcdatamodeld; sourceTree = "<group>"; };
+		CD000016239A5C58003E2B87 /* Budget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Budget.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,7 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BE41404F29B4E4F000E47CD4 /* GRDB in Frameworks */,
+				BE41405329B4EF6500E47CD4 /* libsqlite3.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,22 +85,68 @@
 		951D2B98239A5C58003E2B87 /* Budget */ = {
 			isa = PBXGroup;
 			children = (
-				951D2B99239A5C58003E2B87 /* AppDelegate.swift */,
-				951D2B9B239A5C58003E2B87 /* SceneDelegate.swift */,
-				951D2BBD239A5DCC003E2B87 /* BudgetView.swift */,
-				BE37BA922B2CA9A30094CF7B /* ReportingView.swift */,
-				958C85E3239AA25D0087DB7C /* TransactionView.swift */,
-				951D2BC3239A62C0003E2B87 /* CategoryView.swift */,
-				951D2BBF239A5E3D003E2B87 /* Formatting.swift */,
-				951D2BC5239A7273003E2B87 /* StateController.swift */,
-				951D2BBB239A5CA5003E2B87 /* Model.swift */,
+				CD000001239A5C58003E2B87 /* App */,
+				CD000002239A5C58003E2B87 /* Model */,
+				CD000003239A5C58003E2B87 /* Service */,
+				CD000004239A5C58003E2B87 /* Utility */,
+				CD000005239A5C58003E2B87 /* View */,
+				CD000015239A5C58003E2B87 /* Budget.xcdatamodeld */,
+				CD000016239A5C58003E2B87 /* Budget.entitlements */,
 				951D2B9F239A5C59003E2B87 /* Assets.xcassets */,
 				951D2BA4239A5C59003E2B87 /* LaunchScreen.storyboard */,
 				951D2BA7239A5C59003E2B87 /* Info.plist */,
 				951D2BA1239A5C59003E2B87 /* Preview Content */,
-				BE41405829B592D900E47CD4 /* data.sqlite3 */,
 			);
 			path = Budget;
+			sourceTree = "<group>";
+		};
+		CD000001239A5C58003E2B87 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				951D2B99239A5C58003E2B87 /* AppDelegate.swift */,
+				951D2B9B239A5C58003E2B87 /* SceneDelegate.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		CD000002239A5C58003E2B87 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				951D2BBB239A5CA5003E2B87 /* Model.swift */,
+				CD000010239A5C58003E2B87 /* CDTransaction+CoreDataClass.swift */,
+				CD000011239A5C58003E2B87 /* CDTransaction+CoreDataProperties.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		CD000003239A5C58003E2B87 /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				CD000012239A5C58003E2B87 /* PersistenceController.swift */,
+				951D2BC5239A7273003E2B87 /* StateController.swift */,
+				CD000013239A5C58003E2B87 /* MigrationService.swift */,
+			);
+			path = Service;
+			sourceTree = "<group>";
+		};
+		CD000004239A5C58003E2B87 /* Utility */ = {
+			isa = PBXGroup;
+			children = (
+				951D2BBF239A5E3D003E2B87 /* Formatting.swift */,
+			);
+			path = Utility;
+			sourceTree = "<group>";
+		};
+		CD000005239A5C58003E2B87 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				951D2BBD239A5DCC003E2B87 /* BudgetView.swift */,
+				BE37BA922B2CA9A30094CF7B /* ReportingView.swift */,
+				958C85E3239AA25D0087DB7C /* TransactionView.swift */,
+				951D2BC3239A62C0003E2B87 /* CategoryView.swift */,
+				CD000014239A5C58003E2B87 /* iCloudSettingsView.swift */,
+			);
+			path = View;
 			sourceTree = "<group>";
 		};
 		951D2BA1239A5C59003E2B87 /* Preview Content */ = {
@@ -104,7 +160,6 @@
 		BE41405229B4EF6500E47CD4 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				BE41405329B4EF6500E47CD4 /* libsqlite3.0.tbd */,
 				BE41405429B4EF6600E47CD4 /* libsqlite3.tbd */,
 			);
 			name = Frameworks;
@@ -126,9 +181,6 @@
 			dependencies = (
 			);
 			name = Budget;
-			packageProductDependencies = (
-				BE41404E29B4E4F000E47CD4 /* GRDB */,
-			);
 			productName = Budget;
 			productReference = 951D2B96239A5C58003E2B87 /* Budget.app */;
 			productType = "com.apple.product-type.application";
@@ -157,9 +209,6 @@
 				Base,
 			);
 			mainGroup = 951D2B8D239A5C58003E2B87;
-			packageReferences = (
-				BE41404D29B4E4F000E47CD4 /* XCRemoteSwiftPackageReference "GRDB" */,
-			);
 			productRefGroup = 951D2B97239A5C58003E2B87 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -177,7 +226,6 @@
 				951D2BA6239A5C59003E2B87 /* LaunchScreen.storyboard in Resources */,
 				951D2BA3239A5C59003E2B87 /* Preview Assets.xcassets in Resources */,
 				951D2BA0239A5C59003E2B87 /* Assets.xcassets in Resources */,
-				BE41405929B592D900E47CD4 /* data.sqlite3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -188,15 +236,21 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				951D2BC0239A5E3D003E2B87 /* Formatting.swift in Sources */,
-				BE37BA932B2CA9A30094CF7B /* ReportingView.swift in Sources */,
-				951D2BC4239A62C0003E2B87 /* CategoryView.swift in Sources */,
 				951D2B9A239A5C58003E2B87 /* AppDelegate.swift in Sources */,
 				951D2B9C239A5C58003E2B87 /* SceneDelegate.swift in Sources */,
-				951D2BC6239A7273003E2B87 /* StateController.swift in Sources */,
 				951D2BBC239A5CA5003E2B87 /* Model.swift in Sources */,
+				CD000020239A5C58003E2B87 /* CDTransaction+CoreDataClass.swift in Sources */,
+				CD000021239A5C58003E2B87 /* CDTransaction+CoreDataProperties.swift in Sources */,
+				CD000022239A5C58003E2B87 /* PersistenceController.swift in Sources */,
+				951D2BC6239A7273003E2B87 /* StateController.swift in Sources */,
+				CD000023239A5C58003E2B87 /* MigrationService.swift in Sources */,
+				951D2BC0239A5E3D003E2B87 /* Formatting.swift in Sources */,
 				951D2BBE239A5DCC003E2B87 /* BudgetView.swift in Sources */,
+				BE37BA932B2CA9A30094CF7B /* ReportingView.swift in Sources */,
 				958C85E4239AA25D0087DB7C /* TransactionView.swift in Sources */,
+				951D2BC4239A62C0003E2B87 /* CategoryView.swift in Sources */,
+				CD000024239A5C58003E2B87 /* iCloudSettingsView.swift in Sources */,
+				CD000025239A5C58003E2B87 /* Budget.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -335,6 +389,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = Budget/Budget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"Budget/Preview Content\"";
 				DEVELOPMENT_TEAM = M8V55585XA;
@@ -358,6 +413,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = Budget/Budget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"Budget/Preview Content\"";
 				DEVELOPMENT_TEAM = M8V55585XA;
@@ -398,25 +454,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		BE41404D29B4E4F000E47CD4 /* XCRemoteSwiftPackageReference "GRDB" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/groue/GRDB.swift";
-			requirement = {
-				branch = master;
-				kind = branch;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		BE41404E29B4E4F000E47CD4 /* GRDB */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = BE41404D29B4E4F000E47CD4 /* XCRemoteSwiftPackageReference "GRDB" */;
-			productName = GRDB;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 951D2B8E239A5C58003E2B87 /* Project object */;
 }
