@@ -3,7 +3,7 @@
 //  Budget
 //
 //  Created by David Jiang.
-//  Copyright © 2023 David Jiang. All rights reserved.
+//  Copyright © 2026 David Jiang. All rights reserved.
 //
 
 import Foundation
@@ -153,6 +153,12 @@ struct Account {
     mutating func remove(id: Int) {
         if let index = transactions.firstIndex(where: { $0.id == id }) {
             transactions.remove(at: index)
+        }
+    }
+
+    mutating func update(_ transaction: Transaction) {
+        if let index = transactions.firstIndex(where: { $0.id == transaction.id }) {
+            transactions[index] = transaction
         }
     }
 

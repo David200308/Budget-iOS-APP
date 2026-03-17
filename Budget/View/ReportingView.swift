@@ -3,7 +3,7 @@
 //  Budget
 //
 //  Created by David Jiang on 15/12/2023.
-//  Copyright © 2023 David Jiang. All rights reserved.
+//  Copyright © 2026 David Jiang. All rights reserved.
 //
 
 import SwiftUI

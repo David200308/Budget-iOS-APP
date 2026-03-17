@@ -3,7 +3,7 @@
 //  Budget
 //
 //  Created by David Jiang.
-//  Copyright © 2023 David Jiang. All rights reserved.
+//  Copyright © 2026 David Jiang. All rights reserved.
 //
 
 import UIKit

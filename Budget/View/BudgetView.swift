@@ -3,7 +3,7 @@
 //  Budget
 //
 //  Created by David Jiang.
-//  Copyright © 2023 David Jiang. All rights reserved.
+//  Copyright © 2026 David Jiang. All rights reserved.
 //
 
 import SwiftUI
@@ -193,6 +193,7 @@ struct AccountView: View {
     @EnvironmentObject private var settings: SettingsManager
     let account: Account
     let searchText: String
+    @State private var editingTransaction: Transaction?
 
     private var transactions: [Transaction] {
         let all = account.transactions
@@ -211,16 +212,25 @@ struct AccountView: View {
         List {
             if searchText.isEmpty {
                 BalanceBanner(account: account, currencyCode: settings.currencyCode)
-                    .listRowInsets(EdgeInsets())
+                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 12, trailing: 16))
                     .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
             }
             ForEach(transactions) { transaction in
                 Row(transaction: transaction,
                     currencyCode: settings.currencyCode,
                     timezone: settings.timezone)
+                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .onTapGesture { editingTransaction = transaction }
             }
             .onDelete { indexSet in
                 indexSet.forEach { stateController.delete(id: transactions[$0].id) }
+            }
+            .sheet(item: $editingTransaction) { transaction in
+                TransactionView(editing: transaction)
+                    .environmentObject(stateController)
             }
 
             if transactions.isEmpty && !searchText.isEmpty {
@@ -284,8 +294,7 @@ struct BalanceBanner: View {
             )
         }
         .tabViewStyle(.page(indexDisplayMode: .always))
-        .frame(height: 120)
-        .padding(.horizontal, 4)
+        .frame(height: 100)
         .padding(.vertical, 4)
     }
 
@@ -362,7 +371,11 @@ struct Row: View {
                     .foregroundColor(.secondary)
             }
         }
-        .padding(.vertical)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
     }
 }
 

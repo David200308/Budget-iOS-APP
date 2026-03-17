@@ -3,7 +3,7 @@
 //  Budget
 //
 //  Created by David Jiang.
-//  Copyright © 2023 David Jiang. All rights reserved.
+//  Copyright © 2026 David Jiang. All rights reserved.
 //
 
 import Foundation
@@ -55,6 +55,24 @@ final class StateController: ObservableObject {
             category:    transaction.category,
             status:      1
         ))
+    }
+
+    // MARK: - Update
+
+    func update(_ transaction: Transaction) {
+        let request = CDTransaction.fetchRequest()
+        request.predicate = NSPredicate(format: "localId == %d", transaction.id)
+        do {
+            guard let entity = try context.fetch(request).first else { return }
+            entity.amount          = transaction.amount
+            entity.date            = transaction.date
+            entity.descriptionText = transaction.description.isEmpty ? " " : transaction.description
+            entity.category        = transaction.category.rawValue
+            persistence.save()
+            account.update(transaction)
+        } catch {
+            print("StateController: failed to update transaction \(transaction.id) — \(error)")
+        }
     }
 
     // MARK: - Delete
