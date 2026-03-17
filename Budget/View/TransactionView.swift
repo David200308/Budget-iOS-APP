@@ -18,7 +18,8 @@ struct TransactionView: View {
 	
 	@EnvironmentObject private var stateController: StateController
 	@Environment(\.presentationMode) private var presentationMode
-	
+    @State private var showAmountAlert = false
+
 	var body: some View {
 		NavigationView {
             TransactionContent(amount: $amount, selectedCategory: $selectedCategory, description: $description, selectedDate: $selectedDate)
@@ -29,6 +30,11 @@ struct TransactionView: View {
 						Text("Add")
 							.bold()
 				})
+                .alert("Invalid Amount", isPresented: $showAmountAlert) {
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text("Please enter a valid amount greater than zero.")
+                }
 		}
 	}
 }
@@ -36,13 +42,16 @@ struct TransactionView: View {
 @available(iOS 16.0, *)
 extension TransactionView {
 	func addTransaction() {
+        guard let value = Double(amount), value > 0 else {
+            showAmountAlert = true
+            return
+        }
         let sign = selectedCategory == .income ? 1.0 : -1.0
-        let transaction = Transaction(id: Int(), amount: Double(amount)! * 100.0 * sign, date: selectedDate, description: description, category: selectedCategory, status: 1)
-        print(transaction)
+        let transaction = Transaction(id: Int(), amount: value * 100.0 * sign, date: selectedDate, description: description, category: selectedCategory, status: 1)
 		stateController.add(transaction)
 		dismiss()
 	}
-	
+
 	func dismiss() {
 		presentationMode.wrappedValue.dismiss()
 	}

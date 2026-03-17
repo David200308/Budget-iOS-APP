@@ -8,84 +8,55 @@
 
 import SwiftUI
 import Charts
-import UniformTypeIdentifiers
 
 struct ReportingView: View {
-    @State private var year: String = ""
-    @State private var month: String = ""
-    @State private var amount: String = ""
-    
     @EnvironmentObject private var stateController: StateController
     @Environment(\.presentationMode) private var presentationMode
-    
-    func dismiss() {
-        presentationMode.wrappedValue.dismiss()
-    }
-    
+
     var body: some View {
         NavigationView {
-            ReportContent(year: $year, month: $month, amount: $amount, statistics: readStatisticData())
+            ReportContent(statistics: stateController.account.statistics)
                 .navigationBarTitle("Statistic Report")
-                .navigationBarItems(leading: Button(action: { self.dismiss() }) {
+                .navigationBarItems(leading: Button(action: { presentationMode.wrappedValue.dismiss() }) {
                     Text("Back")
-                    })
+                })
         }
     }
-    
 }
 
+// MARK: - Month name helper
+
 enum Month: String {
-    case january = "1"
-    case february = "2"
-    case march = "3"
-    case april = "4"
-    case may = "5"
-    case june = "6"
-    case july = "7"
-    case august = "8"
-    case september = "9"
-    case october = "10"
-    case november = "11"
-    case december = "12"
-    
+    case january   = "1",  february  = "2",  march    = "3"
+    case april     = "4",  may       = "5",  june     = "6"
+    case july      = "7",  august    = "8",  september = "9"
+    case october   = "10", november  = "11", december = "12"
+
     var monthName: String {
         switch self {
-        case .january:
-            return "January"
-        case .february:
-            return "February"
-        case .march:
-            return "March"
-        case .april:
-            return "April"
-        case .may:
-            return "May"
-        case .june:
-            return "June"
-        case .july:
-            return "July"
-        case .august:
-            return "August"
-        case .september:
-            return "September"
-        case .october:
-            return "October"
-        case .november:
-            return "November"
-        case .december:
-            return "December"
+        case .january:   return "January"
+        case .february:  return "February"
+        case .march:     return "March"
+        case .april:     return "April"
+        case .may:       return "May"
+        case .june:      return "June"
+        case .july:      return "July"
+        case .august:    return "August"
+        case .september: return "September"
+        case .october:   return "October"
+        case .november:  return "November"
+        case .december:  return "December"
         }
     }
-    
+
     static func fromNumber(_ number: String) -> Month? {
         return Month(rawValue: number)
     }
 }
 
+// MARK: - Report Content
+
 struct ReportContent: View {
-    @Binding var year: String
-    @Binding var month: String
-    @Binding var amount: String
     var statistics: [Statistic]
 
     @available(iOS 16.0, *)
@@ -93,7 +64,7 @@ struct ReportContent: View {
         VStack {
             GroupBox("Monthly Expense") {
                 Chart {
-                    ForEach(statistics.filter({ $0.month != "All" })) { data in
+                    ForEach(statistics.filter { $0.month != "All" }) { data in
                         BarMark(
                             x: .value("Month", data.year + " - " + data.month),
                             y: .value("Expense", data.amount / (-100)),
@@ -115,9 +86,9 @@ struct ReportContent: View {
                             .font(.title3)
                     }
                 } else {
-                    let tempMonth = Month.fromNumber(stat.month)!.monthName
+                    let monthName = Month.fromNumber(stat.month)?.monthName ?? stat.month
                     HStack {
-                        Text(tempMonth).bold().font(.headline)
+                        Text(monthName).bold().font(.headline)
                         Text(String(format: "%.2f", stat.amount / 100))
                             .frame(maxWidth: .infinity, alignment: .trailing)
                             .font(.headline)
