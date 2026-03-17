@@ -10,50 +10,143 @@ import SwiftUI
 
 struct iCloudSettingsView: View {
     @ObservedObject private var persistence = PersistenceController.shared
+    @ObservedObject private var settings    = SettingsManager.shared
     @Environment(\.presentationMode) private var presentationMode
 
     @State private var showRestartNotice = false
-    @State private var pendingValue = false
+    @State private var pendingiCloudValue = false
 
     var body: some View {
         NavigationView {
             Form {
+
+                // MARK: Currency
+                Section(header: Text("Currency")) {
+                    ForEach(SettingsManager.currencies) { option in
+                        Button(action: { settings.currencyCode = option.id }) {
+                            HStack {
+                                Text(option.symbol)
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                    .frame(width: 32, alignment: .leading)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(option.id)
+                                        .font(.body)
+                                        .foregroundColor(.primary)
+                                    Text(option.name)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                if settings.currencyCode == option.id {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                // MARK: Timezone
+                Section(header: Text("Timezone")) {
+                    NavigationLink(destination: TimezonePickerView()) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(settings.selectedTimezone.displayName)
+                                    .font(.body)
+                                Text(SettingsManager.utcOffset(for: settings.timezoneIdentifier))
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                        }
+                    }
+                }
+
+                // MARK: iCloud Sync
                 Section(header: Text("iCloud Sync")) {
                     Toggle("Sync with iCloud", isOn: Binding(
                         get: { persistence.iCloudSyncEnabled },
                         set: { newValue in
-                            pendingValue = newValue
-                            showRestartNotice = true
+                            pendingiCloudValue = newValue
+                            showRestartNotice  = true
                         }
                     ))
-                }
-                Section(footer: Text("Your transactions are always saved locally on this device. When iCloud sync is on, data is automatically kept in sync across all your Apple devices signed in to the same iCloud account.")) {
-                    EmptyView()
-                }
-                Section(header: Text("Current status")) {
-                    HStack {
-                        Image(systemName: persistence.iCloudSyncEnabled ? "checkmark.icloud.fill" : "icloud.slash")
+                    HStack(spacing: 8) {
+                        Image(systemName: persistence.iCloudSyncEnabled
+                              ? "checkmark.icloud.fill" : "icloud.slash")
                             .foregroundColor(persistence.iCloudSyncEnabled ? .blue : .secondary)
-                        Text(persistence.iCloudSyncEnabled ? "iCloud sync is on" : "iCloud sync is off")
-                            .foregroundColor(persistence.iCloudSyncEnabled ? .primary : .secondary)
+                        Text(persistence.iCloudSyncEnabled
+                             ? "Currency and timezone sync across devices"
+                             : "Data saved locally only")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
+                }
+
+                Section(footer: Text("Currency affects display only — no exchange rate conversion is applied. Timezone is used when formatting transaction dates.")) {
+                    EmptyView()
                 }
             }
             .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(trailing: Button("Done") {
                 presentationMode.wrappedValue.dismiss()
             })
             .alert("Restart Required", isPresented: $showRestartNotice) {
-                Button("Apply") {
-                    persistence.setICloudSync(pendingValue)
-                }
+                Button("Apply") { persistence.setICloudSync(pendingiCloudValue) }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text(pendingValue
+                Text(pendingiCloudValue
                     ? "iCloud sync will be enabled the next time you open the app."
-                    : "iCloud sync will be disabled the next time you open the app."
-                )
+                    : "iCloud sync will be disabled the next time you open the app.")
             }
         }
+    }
+}
+
+// MARK: - Timezone Picker
+
+struct TimezonePickerView: View {
+    @ObservedObject private var settings = SettingsManager.shared
+
+    private var grouped: [(region: String, options: [SettingsManager.TimezoneOption])] {
+        let regions = SettingsManager.timezones.map { $0.region }
+        let unique  = regions.reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
+        return unique.map { region in
+            (region, SettingsManager.timezones.filter { $0.region == region })
+        }
+    }
+
+    var body: some View {
+        List {
+            ForEach(grouped, id: \.region) { group in
+                Section(header: Text(group.region)) {
+                    ForEach(group.options) { option in
+                        Button(action: { settings.timezoneIdentifier = option.id }) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(option.displayName)
+                                        .font(.body)
+                                        .foregroundColor(.primary)
+                                    Text(SettingsManager.utcOffset(for: option.id))
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                if settings.timezoneIdentifier == option.id {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .navigationTitle("Timezone")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

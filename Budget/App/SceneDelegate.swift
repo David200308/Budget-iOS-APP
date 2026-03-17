@@ -20,7 +20,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         MigrationService.migrateIfNeeded(into: PersistenceController.shared.context)
 
         let stateController = StateController()
-        let rootView = BudgetView().environmentObject(stateController)
+        let rootView = BudgetView()
+            .environmentObject(stateController)
+            .environmentObject(SettingsManager.shared)
 
         let window = UIWindow(windowScene: windowScene)
         window.rootViewController = UIHostingController(rootView: rootView)

@@ -26,6 +26,7 @@
 		CD000023239A5C58003E2B87 /* MigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD000013239A5C58003E2B87 /* MigrationService.swift */; };
 		CD000024239A5C58003E2B87 /* iCloudSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD000014239A5C58003E2B87 /* iCloudSettingsView.swift */; };
 		CD000025239A5C58003E2B87 /* Budget.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = CD000015239A5C58003E2B87 /* Budget.xcdatamodeld */; };
+		CD000026239A5C58003E2B87 /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD000017239A5C58003E2B87 /* SettingsManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,6 +52,7 @@
 		CD000014239A5C58003E2B87 /* iCloudSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudSettingsView.swift; sourceTree = "<group>"; };
 		CD000015239A5C58003E2B87 /* Budget.xcdatamodeld */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodeld; path = Budget.xcdatamodeld; sourceTree = "<group>"; };
 		CD000016239A5C58003E2B87 /* Budget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Budget.entitlements; sourceTree = "<group>"; };
+		CD000017239A5C58003E2B87 /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -125,6 +127,7 @@
 				CD000012239A5C58003E2B87 /* PersistenceController.swift */,
 				951D2BC5239A7273003E2B87 /* StateController.swift */,
 				CD000013239A5C58003E2B87 /* MigrationService.swift */,
+				CD000017239A5C58003E2B87 /* SettingsManager.swift */,
 			);
 			path = Service;
 			sourceTree = "<group>";
@@ -251,6 +254,7 @@
 				951D2BC4239A62C0003E2B87 /* CategoryView.swift in Sources */,
 				CD000024239A5C58003E2B87 /* iCloudSettingsView.swift in Sources */,
 				CD000025239A5C58003E2B87 /* Budget.xcdatamodeld in Sources */,
+				CD000026239A5C58003E2B87 /* SettingsManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -12,28 +12,31 @@ import UniformTypeIdentifiers
 @available(iOS 16.0, *)
 struct BudgetView: View {
     @EnvironmentObject private var stateController: StateController
+    @EnvironmentObject private var settings: SettingsManager
+
     @State private var addingNewTransaction = false
     @State private var showReporting        = false
     @State private var showSettings         = false
+    @State private var searchText           = ""
 
     // Export
     @State private var showFileExporter = false
     @State private var csvData: Data?   = nil
 
     // Import
-    @State private var showFileImporter  = false
-    @State private var showImportResult  = false
-    @State private var importedCount     = 0
-    @State private var showImportError   = false
+    @State private var showFileImporter = false
+    @State private var showImportResult = false
+    @State private var importedCount    = 0
+    @State private var showImportError  = false
 
     var body: some View {
         NavigationView {
-            AccountView(account: stateController.account)
+            AccountView(account: stateController.account, searchText: searchText)
                 .navigationTitle("Expense")
+                .searchable(text: $searchText, prompt: "Search transactions")
                 .toolbar {
                     ToolbarItemGroup(placement: .navigationBarTrailing) {
 
-                        // Data menu: export / import / template
                         Menu {
                             Button(action: exportCSV) {
                                 Label("Export CSV", systemImage: "square.and.arrow.up")
@@ -68,19 +71,17 @@ struct BudgetView: View {
                         }
                     }
                 }
-                // Add transaction
                 .sheet(isPresented: $addingNewTransaction) {
                     TransactionView().environmentObject(stateController)
                 }
-                // Report
                 .sheet(isPresented: $showReporting) {
-                    ReportingView().environmentObject(stateController)
+                    ReportingView()
+                        .environmentObject(stateController)
+                        .environmentObject(settings)
                 }
-                // iCloud settings
                 .sheet(isPresented: $showSettings) {
                     iCloudSettingsView()
                 }
-                // Export CSV
                 .fileExporter(
                     isPresented: $showFileExporter,
                     document: CSVDocument(data: csvData ?? Data()),
@@ -91,7 +92,6 @@ struct BudgetView: View {
                         print("Export failed: \(error.localizedDescription)")
                     }
                 }
-                // Import CSV
                 .fileImporter(
                     isPresented: $showFileImporter,
                     allowedContentTypes: [.commaSeparatedText],
@@ -106,7 +106,6 @@ struct BudgetView: View {
                         showImportError = true
                     }
                 }
-                // Import result alert
                 .alert("Import Complete", isPresented: $showImportResult) {
                     Button("OK", role: .cancel) {}
                 } message: {
@@ -141,22 +140,15 @@ struct BudgetView: View {
     // MARK: - Import
 
     private func importCSV(from url: URL) {
-        guard url.startAccessingSecurityScopedResource() else {
-            showImportError = true
-            return
-        }
+        guard url.startAccessingSecurityScopedResource() else { showImportError = true; return }
         defer { url.stopAccessingSecurityScopedResource() }
 
         guard let content = try? String(contentsOf: url, encoding: .utf8) else {
-            showImportError = true
-            return
+            showImportError = true; return
         }
 
         let lines = content.components(separatedBy: .newlines).filter { !$0.isEmpty }
-        guard lines.count > 1 else {
-            showImportError = true
-            return
-        }
+        guard lines.count > 1 else { showImportError = true; return }
 
         let headers = lines[0]
             .components(separatedBy: ",")
@@ -165,55 +157,32 @@ struct BudgetView: View {
         guard let amountIdx   = headers.firstIndex(of: "amount"),
               let dateIdx     = headers.firstIndex(of: "date"),
               let categoryIdx = headers.firstIndex(of: "category") else {
-            showImportError = true
-            return
+            showImportError = true; return
         }
         let descIdx = headers.firstIndex(of: "description")
 
-        // Try multiple date formats
         let dateFormatters: [DateFormatter] = ["MM/dd/yyyy", "dd/MM/yyyy", "yyyy-MM-dd"].map {
-            let f = DateFormatter()
-            f.dateFormat = $0
-            return f
+            let f = DateFormatter(); f.dateFormat = $0; return f
         }
-        func parseDate(_ str: String) -> Date? {
-            dateFormatters.lazy.compactMap { $0.date(from: str) }.first
-        }
+        func parseDate(_ s: String) -> Date? { dateFormatters.lazy.compactMap { $0.date(from: s) }.first }
 
         var imported = 0
         for line in lines.dropFirst() {
-            let fields = line.components(separatedBy: ",")
-                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-
+            let fields = line.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             let maxIdx = max(amountIdx, dateIdx, categoryIdx)
             guard fields.count > maxIdx else { continue }
-
             guard let amount   = Double(fields[amountIdx]),
                   let date     = parseDate(fields[dateIdx]),
                   let category = Transaction.Category(rawValue: fields[categoryIdx].lowercased())
             else { continue }
-
             let desc = descIdx.flatMap { fields.indices.contains($0) ? fields[$0] : nil } ?? ""
-
-            // Amount is stored in cents. CSV amounts are already signed.
-            let transaction = Transaction(
-                id: 0,
-                amount: amount * 100.0,
-                date: date,
-                description: desc,
-                category: category,
-                status: 1
-            )
-            stateController.add(transaction)
+            stateController.add(Transaction(id: 0, amount: amount * 100, date: date,
+                                            description: desc, category: category, status: 1))
             imported += 1
         }
 
-        if imported > 0 {
-            importedCount = imported
-            showImportResult = true
-        } else {
-            showImportError = true
-        }
+        if imported > 0 { importedCount = imported; showImportResult = true }
+        else { showImportError = true }
     }
 }
 
@@ -221,22 +190,52 @@ struct BudgetView: View {
 
 struct AccountView: View {
     @EnvironmentObject private var stateController: StateController
+    @EnvironmentObject private var settings: SettingsManager
     let account: Account
+    let searchText: String
 
     private var transactions: [Transaction] {
-        account.transactions
+        let all = account.transactions
             .filter { $0.status == 1 }
             .sorted { $0.date > $1.date }
+        guard !searchText.isEmpty else { return all }
+        let q = searchText.lowercased()
+        return all.filter { t in
+            t.description.lowercased().contains(q)
+                || t.category.name.lowercased().contains(q)
+                || t.amount.currencyFormat(code: settings.currencyCode).contains(q)
+        }
     }
 
     var body: some View {
         List {
-            Balance(monthAmount: account.monthBalance)
+            if searchText.isEmpty {
+                Balance(monthAmount: account.monthBalance,
+                        currencyCode: settings.currencyCode)
+            }
             ForEach(transactions) { transaction in
-                Row(transaction: transaction)
+                Row(transaction: transaction,
+                    currencyCode: settings.currencyCode,
+                    timezone: settings.timezone)
             }
             .onDelete { indexSet in
                 indexSet.forEach { stateController.delete(id: transactions[$0].id) }
+            }
+
+            if transactions.isEmpty && !searchText.isEmpty {
+                HStack {
+                    Spacer()
+                    VStack(spacing: 8) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.largeTitle)
+                            .foregroundColor(.secondary)
+                        Text("No results for \"\(searchText)\"")
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                }
+                .padding(.vertical, 40)
+                .listRowBackground(Color.clear)
             }
         }
     }
@@ -246,6 +245,7 @@ struct AccountView: View {
 
 struct Balance: View {
     var monthAmount: Double
+    var currencyCode: String
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -253,7 +253,7 @@ struct Balance: View {
                 .font(.callout)
                 .bold()
                 .foregroundColor(.secondary)
-            Text(monthAmount.currencyFormat)
+            Text(monthAmount.currencyFormat(code: currencyCode))
                 .font(.system(size: 30))
                 .bold()
         }
@@ -265,6 +265,8 @@ struct Balance: View {
 
 struct Row: View {
     let transaction: Transaction
+    let currencyCode: String
+    let timezone: TimeZone
 
     var body: some View {
         HStack(spacing: 16.0) {
@@ -278,10 +280,10 @@ struct Row: View {
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 4.0) {
-                Text(transaction.amount.currencyFormat)
+                Text(transaction.amount.currencyFormat(code: currencyCode))
                     .font(.headline)
                     .foregroundColor(transaction.amount > 0 ? .blue : .primary)
-                Text(transaction.date.transactionFormat)
+                Text(transaction.date.transactionFormat(timezone: timezone))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -297,22 +299,16 @@ struct CSVDocument: FileDocument {
     var data: Data
 
     init(data: Data) { self.data = data }
-
     init(configuration: ReadConfiguration) throws {
         data = configuration.file.regularFileContents ?? Data()
     }
-
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
         .init(regularFileWithContents: data)
     }
 }
 
-// MARK: - Date export filename helper
-
 private extension Date {
     var exportFilename: String {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        return f.string(from: self)
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; return f.string(from: self)
     }
 }
