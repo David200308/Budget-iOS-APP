@@ -62,10 +62,10 @@ struct Account {
 
     // MARK: Balances
 
-    var yearBalance: Double {
-        let year = Calendar.current.component(.year, from: Date())
+    var dayBalance: Double {
+        let today = Date()
         return transactions
-            .filter { $0.status == 1 && Calendar.current.component(.year, from: $0.date) == year }
+            .filter { $0.status == 1 && Calendar.current.isDate(today, equalTo: $0.date, toGranularity: .day) }
             .reduce(0) { $0 + $1.amount }
     }
 
@@ -78,6 +78,38 @@ struct Account {
                     && Calendar.current.isDate(today, equalTo: $0.date, toGranularity: .year)
             }
             .reduce(0) { $0 + $1.amount }
+    }
+
+    var yearBalance: Double {
+        let year = Calendar.current.component(.year, from: Date())
+        return transactions
+            .filter { $0.status == 1 && Calendar.current.component(.year, from: $0.date) == year }
+            .reduce(0) { $0 + $1.amount }
+    }
+
+    var dayTransactionCount: Int {
+        let today = Date()
+        return transactions
+            .filter { $0.status == 1 && Calendar.current.isDate(today, equalTo: $0.date, toGranularity: .day) }
+            .count
+    }
+
+    var monthTransactionCount: Int {
+        let today = Date()
+        return transactions
+            .filter {
+                $0.status == 1
+                    && Calendar.current.isDate(today, equalTo: $0.date, toGranularity: .month)
+                    && Calendar.current.isDate(today, equalTo: $0.date, toGranularity: .year)
+            }
+            .count
+    }
+
+    var yearTransactionCount: Int {
+        let year = Calendar.current.component(.year, from: Date())
+        return transactions
+            .filter { $0.status == 1 && Calendar.current.component(.year, from: $0.date) == year }
+            .count
     }
 
     // MARK: Statistics (grouped by month and year)

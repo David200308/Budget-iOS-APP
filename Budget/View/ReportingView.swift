@@ -9,17 +9,253 @@
 import SwiftUI
 import Charts
 
+// MARK: - Tab
+
+enum ReportTab: String, CaseIterable {
+    case day   = "Day"
+    case month = "Month"
+    case year  = "Year"
+}
+
 // MARK: - Root
 
 struct ReportingView: View {
     @EnvironmentObject private var stateController: StateController
     @EnvironmentObject private var settings: SettingsManager
     @Environment(\.presentationMode) private var presentationMode
-    @State private var selectedYear: String = String(Calendar.current.component(.year, from: Date()))
+
+    @State private var selectedTab: ReportTab = .year
+    @State private var selectedYear: String   = String(Calendar.current.component(.year, from: Date()))
+    @State private var selectedMonth: Date    = {
+        Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: Date())) ?? Date()
+    }()
+    @State private var selectedDay: Date = Calendar.current.startOfDay(for: Date())
 
     private var transactions: [Transaction] {
         stateController.account.transactions.filter { $0.status == 1 }
     }
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 20) {
+                    Picker("Period", selection: $selectedTab) {
+                        ForEach(ReportTab.allCases, id: \.self) { tab in
+                            Text(tab.rawValue).tag(tab)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    if selectedTab == .day {
+                        DayReportView(
+                            selectedDay:  $selectedDay,
+                            transactions: transactions,
+                            currencyCode: settings.currencyCode,
+                            timezone:     settings.timezone
+                        )
+                    } else if selectedTab == .month {
+                        MonthReportView(
+                            selectedMonth: $selectedMonth,
+                            transactions:  transactions,
+                            currencyCode:  settings.currencyCode
+                        )
+                    } else {
+                        YearReportView(
+                            selectedYear: $selectedYear,
+                            transactions: transactions,
+                            currencyCode: settings.currencyCode
+                        )
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.bottom, 32)
+            }
+            .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            .navigationTitle("Report")
+            .navigationBarTitleDisplayMode(.large)
+            .navigationBarItems(leading: Button("Back") {
+                presentationMode.wrappedValue.dismiss()
+            })
+        }
+    }
+}
+
+// MARK: - Period Navigator
+
+private struct PeriodNavigator: View {
+    let label: String
+    let onPrev: () -> Void
+    let onNext: () -> Void
+
+    var body: some View {
+        HStack {
+            Button(action: onPrev) {
+                Image(systemName: "chevron.left")
+                    .font(.subheadline.bold())
+            }
+            Spacer()
+            Text(label)
+                .font(.subheadline.bold())
+            Spacer()
+            Button(action: onNext) {
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.bold())
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 10)
+        .background(Color(.secondarySystemGroupedBackground))
+        .cornerRadius(12)
+    }
+}
+
+// MARK: - Day Report
+
+private struct DayReportView: View {
+    @Binding var selectedDay: Date
+    let transactions: [Transaction]
+    let currencyCode: String
+    let timezone: TimeZone
+
+    private static let cal = Calendar.current
+
+    private var dayTransactions: [Transaction] {
+        transactions
+            .filter { Self.cal.isDate($0.date, inSameDayAs: selectedDay) }
+            .sorted { $0.date > $1.date }
+    }
+
+    private var income:   Double { dayTransactions.filter { $0.amount > 0 }.reduce(0) { $0 + $1.amount } }
+    private var expenses: Double { dayTransactions.filter { $0.amount < 0 }.reduce(0) { $0 + $1.amount } }
+    private var net:      Double { income + expenses }
+
+    private var dayLabel: String {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        return f.string(from: selectedDay)
+    }
+
+    var body: some View {
+        VStack(spacing: 16) {
+            PeriodNavigator(label: dayLabel) {
+                selectedDay = Self.cal.date(byAdding: .day, value: -1, to: selectedDay) ?? selectedDay
+            } onNext: {
+                selectedDay = Self.cal.date(byAdding: .day, value: 1, to: selectedDay) ?? selectedDay
+            }
+
+            if dayTransactions.isEmpty {
+                EmptyReportView(label: dayLabel)
+            } else {
+                SummaryCards(income: income, expenses: expenses, net: net, currencyCode: currencyCode)
+
+                VStack(alignment: .leading, spacing: 0) {
+                    Label("Transactions", systemImage: "list.bullet")
+                        .font(.headline)
+                        .padding(.bottom, 12)
+
+                    ForEach(Array(dayTransactions.enumerated()), id: \.element.id) { idx, t in
+                        DayTransactionRow(transaction: t, currencyCode: currencyCode)
+                        if idx < dayTransactions.count - 1 {
+                            Divider().padding(.leading, 4)
+                        }
+                    }
+                }
+                .padding()
+                .background(Color(.secondarySystemGroupedBackground))
+                .cornerRadius(16)
+            }
+        }
+    }
+}
+
+private struct DayTransactionRow: View {
+    let transaction: Transaction
+    let currencyCode: String
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(transaction.category.name)
+                    .font(.subheadline.bold())
+                if !transaction.description.isEmpty {
+                    Text(transaction.description)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            Spacer()
+            Text(transaction.amount.currencyFormat(code: currencyCode))
+                .font(.subheadline.bold())
+                .foregroundColor(transaction.amount > 0 ? .blue : .primary)
+        }
+        .padding(.vertical, 10)
+    }
+}
+
+// MARK: - Month Report
+
+private struct MonthReportView: View {
+    @Binding var selectedMonth: Date
+    let transactions: [Transaction]
+    let currencyCode: String
+
+    private static let cal = Calendar.current
+
+    private var monthTransactions: [Transaction] {
+        transactions.filter {
+            Self.cal.isDate($0.date, equalTo: selectedMonth, toGranularity: .month) &&
+            Self.cal.isDate($0.date, equalTo: selectedMonth, toGranularity: .year)
+        }
+    }
+
+    private var income:   Double { monthTransactions.filter { $0.amount > 0 }.reduce(0) { $0 + $1.amount } }
+    private var expenses: Double { monthTransactions.filter { $0.amount < 0 }.reduce(0) { $0 + $1.amount } }
+    private var net:      Double { income + expenses }
+
+    private var categoryTotals: [(category: Transaction.Category, amount: Double)] {
+        var dict: [Transaction.Category: Double] = [:]
+        for t in monthTransactions { dict[t.category, default: 0] += abs(t.amount) }
+        let grandTotal = dict.values.reduce(0, +)
+        guard grandTotal > 0 else { return [] }
+        return Transaction.Category.allCases
+            .compactMap { cat in dict[cat].map { (cat, $0) } }
+            .sorted { $0.amount > $1.amount }
+    }
+
+    private var monthLabel: String {
+        let f = DateFormatter()
+        f.dateFormat = "MMMM yyyy"
+        return f.string(from: selectedMonth)
+    }
+
+    var body: some View {
+        VStack(spacing: 16) {
+            PeriodNavigator(label: monthLabel) {
+                selectedMonth = Self.cal.date(byAdding: .month, value: -1, to: selectedMonth) ?? selectedMonth
+            } onNext: {
+                selectedMonth = Self.cal.date(byAdding: .month, value: 1, to: selectedMonth) ?? selectedMonth
+            }
+
+            if monthTransactions.isEmpty {
+                EmptyReportView(label: monthLabel)
+            } else {
+                SummaryCards(income: income, expenses: expenses, net: net, currencyCode: currencyCode)
+
+                if !categoryTotals.isEmpty {
+                    let grandTotal = categoryTotals.reduce(0) { $0 + $1.amount }
+                    CategoryBreakdown(totals: categoryTotals, grandTotal: grandTotal)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Year Report
+
+private struct YearReportView: View {
+    @Binding var selectedYear: String
+    let transactions: [Transaction]
+    let currencyCode: String
 
     private var availableYears: [String] {
         let years = Set(transactions.map {
@@ -34,13 +270,9 @@ struct ReportingView: View {
         }
     }
 
-    private var totalIncome: Double {
-        filtered.filter { $0.amount > 0 }.reduce(0) { $0 + $1.amount }
-    }
-    private var totalExpenses: Double {
-        filtered.filter { $0.amount < 0 }.reduce(0) { $0 + $1.amount }
-    }
-    private var netBalance: Double { totalIncome + totalExpenses }
+    private var income:   Double { filtered.filter { $0.amount > 0 }.reduce(0) { $0 + $1.amount } }
+    private var expenses: Double { filtered.filter { $0.amount < 0 }.reduce(0) { $0 + $1.amount } }
+    private var net:      Double { income + expenses }
 
     private var monthlySummaries: [MonthSummary] {
         var dict: [Int: (income: Double, expenses: Double)] = [:]
@@ -67,40 +299,25 @@ struct ReportingView: View {
     }
 
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    if availableYears.count > 1 {
-                        YearPicker(years: availableYears, selected: $selectedYear)
-                    }
-
-                    if filtered.isEmpty {
-                        EmptyReportView(year: selectedYear)
-                    } else {
-                        SummaryCards(income: totalIncome,
-                                     expenses: totalExpenses,
-                                     net: netBalance,
-                                     currencyCode: settings.currencyCode)
-
-                        MonthlyChart(summaries: monthlySummaries)
-
-                        if !categoryTotals.isEmpty {
-                            let grandTotal = categoryTotals.reduce(0) { $0 + $1.amount }
-                            CategoryBreakdown(totals: categoryTotals, grandTotal: grandTotal)
-                        }
-
-                        MonthlyDetail(summaries: monthlySummaries)
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.bottom, 32)
+        VStack(spacing: 16) {
+            if availableYears.count > 1 {
+                YearPicker(years: availableYears, selected: $selectedYear)
             }
-            .background(Color(.systemGroupedBackground).ignoresSafeArea())
-            .navigationTitle("Report")
-            .navigationBarTitleDisplayMode(.large)
-            .navigationBarItems(leading: Button("Back") {
-                presentationMode.wrappedValue.dismiss()
-            })
+
+            if filtered.isEmpty {
+                EmptyReportView(label: selectedYear)
+            } else {
+                SummaryCards(income: income, expenses: expenses, net: net, currencyCode: currencyCode)
+
+                MonthlyChart(summaries: monthlySummaries)
+
+                if !categoryTotals.isEmpty {
+                    let grandTotal = categoryTotals.reduce(0) { $0 + $1.amount }
+                    CategoryBreakdown(totals: categoryTotals, grandTotal: grandTotal)
+                }
+
+                MonthlyDetail(summaries: monthlySummaries)
+            }
         }
     }
 }
@@ -362,14 +579,14 @@ private struct MonthDetailRow: View {
 // MARK: - Empty State
 
 private struct EmptyReportView: View {
-    let year: String
+    let label: String
 
     var body: some View {
         VStack(spacing: 14) {
             Image(systemName: "chart.bar.xaxis")
                 .font(.system(size: 52))
                 .foregroundColor(.secondary.opacity(0.5))
-            Text("No data for \(year)")
+            Text("No data for \(label)")
                 .font(.title3.bold())
             Text("Add transactions to see your spending report here.")
                 .font(.subheadline)
@@ -408,8 +625,8 @@ struct MonthSummary: Identifiable {
 // MARK: - Month enum
 
 enum Month: String {
-    case january = "1", february = "2",  march    = "3"
-    case april   = "4", may      = "5",  june     = "6"
+    case january = "1", february = "2",  march     = "3"
+    case april   = "4", may      = "5",  june      = "6"
     case july    = "7", august   = "8",  september = "9"
     case october = "10", november = "11", december = "12"
 

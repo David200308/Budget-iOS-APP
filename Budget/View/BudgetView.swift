@@ -210,8 +210,9 @@ struct AccountView: View {
     var body: some View {
         List {
             if searchText.isEmpty {
-                Balance(monthAmount: account.monthBalance,
-                        currencyCode: settings.currencyCode)
+                BalanceBanner(account: account, currencyCode: settings.currencyCode)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
             }
             ForEach(transactions) { transaction in
                 Row(transaction: transaction,
@@ -241,23 +242,96 @@ struct AccountView: View {
     }
 }
 
-// MARK: - Balance
+// MARK: - Balance Banner
 
-struct Balance: View {
-    var monthAmount: Double
-    var currencyCode: String
+struct BalanceBanner: View {
+    let account: Account
+    let currencyCode: String
+
+    private var today: Date { Date() }
+
+    private var monthLabel: String {
+        let f = DateFormatter()
+        f.dateFormat = "MMMM"
+        return f.string(from: today)
+    }
+
+    private var yearLabel: String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy"
+        return f.string(from: today)
+    }
 
     var body: some View {
-        VStack(alignment: .leading) {
-            Text("Monthly Balance")
-                .font(.callout)
-                .bold()
-                .foregroundColor(.secondary)
-            Text(monthAmount.currencyFormat(code: currencyCode))
-                .font(.system(size: 30))
-                .bold()
+        TabView {
+            BalanceCard(
+                period:      "Today",
+                subtitle:    dateLabel(today),
+                amount:      account.dayBalance,
+                currencyCode: currencyCode
+            )
+            BalanceCard(
+                period:      "This Month",
+                subtitle:    monthLabel,
+                amount:      account.monthBalance,
+                currencyCode: currencyCode
+            )
+            BalanceCard(
+                period:      "This Year",
+                subtitle:    yearLabel,
+                amount:      account.yearBalance,
+                currencyCode: currencyCode
+            )
         }
-        .padding(.vertical)
+        .tabViewStyle(.page(indexDisplayMode: .always))
+        .frame(height: 120)
+        .padding(.horizontal, 4)
+        .padding(.vertical, 4)
+    }
+
+    private func dateLabel(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .none
+        return f.string(from: date)
+    }
+}
+
+// MARK: - Balance Card
+
+private struct BalanceCard: View {
+    let period: String
+    let subtitle: String
+    let amount: Double
+    let currencyCode: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Header row
+            HStack {
+                Text(period)
+                    .font(.caption.bold())
+                    .foregroundColor(.secondary)
+                Spacer()
+                Text(subtitle)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+
+            // Amount
+            Text(amount.currencyFormat(code: currencyCode))
+                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
+
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
     }
 }
 
@@ -310,5 +384,17 @@ struct CSVDocument: FileDocument {
 private extension Date {
     var exportFilename: String {
         let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; return f.string(from: self)
+    }
+}
+
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: .alphanumerics.inverted)
+        var value: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&value)
+        let r = Double((value >> 16) & 0xFF) / 255
+        let g = Double((value >>  8) & 0xFF) / 255
+        let b = Double( value        & 0xFF) / 255
+        self.init(red: r, green: g, blue: b)
     }
 }

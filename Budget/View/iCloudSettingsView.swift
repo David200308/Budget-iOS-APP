@@ -22,30 +22,13 @@ struct iCloudSettingsView: View {
 
                 // MARK: Currency
                 Section(header: Text("Currency")) {
-                    ForEach(SettingsManager.currencies) { option in
-                        Button(action: { settings.currencyCode = option.id }) {
-                            HStack {
-                                Text(option.symbol)
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                    .frame(width: 32, alignment: .leading)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(option.id)
-                                        .font(.body)
-                                        .foregroundColor(.primary)
-                                    Text(option.name)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                Spacer()
-                                if settings.currencyCode == option.id {
-                                    Image(systemName: "checkmark")
-                                        .foregroundColor(.blue)
-                                }
-                            }
+                    Picker("Currency", selection: $settings.currencyCode) {
+                        ForEach(SettingsManager.currencies) { option in
+                            Text("\(option.symbol)  \(option.id) — \(option.name)")
+                                .tag(option.id)
                         }
-                        .buttonStyle(.plain)
                     }
+                    .pickerStyle(.menu)
                 }
 
                 // MARK: Timezone
